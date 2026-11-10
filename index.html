@@ -27,6 +27,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #toast{position:fixed;left:50%;top:24%;transform:translateX(-50%);background:rgba(13,34,71,.88);border:1px solid var(--gold);padding:10px 20px;border-radius:10px;font-weight:800;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:80vw}
 #bubble{position:fixed;transform:translate(-50%,-100%);background:#fff;color:#0b1730;font-weight:700;font-size:14px;line-height:1.35;padding:9px 13px;border-radius:12px;max-width:260px;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 #bubble::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+#taf{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);font:900 clamp(36px,9vw,112px) var(--display);color:var(--gold);text-shadow:0 4px 0 #0b1730,0 0 40px rgba(243,207,122,.6);letter-spacing:.02em;white-space:nowrap;opacity:0;transition:opacity .4s,letter-spacing 3s;pointer-events:none}
 #joy{position:fixed;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);display:none;pointer-events:none}
 #knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(243,207,122,.85)}
 #overlay{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px 28px;background:linear-gradient(180deg,rgba(6,14,32,.15),rgba(6,14,32,.7));box-sizing:border-box}
@@ -46,7 +47,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div class="panel" id="questp"><div id="qname">Missão 1 de 5</div><div id="qgoal">Recolher os pavões: 0 de 5</div></div>
 <div class="panel" id="mapp"><canvas id="map"></canvas></div>
 <div id="meter"><div id="meterLabel">Sinal de pavão</div><div id="bar"><div id="fill"></div></div></div>
-<div id="toast"></div><div id="bubble"></div><div id="joy"><div id="knob"></div></div>
+<div id="toast"></div><div id="taf">CORRIDA DO TAF</div><div id="bubble"></div><div id="joy"><div id="knob"></div></div>
 <div id="overlay"><div id="dlg"><div id="who">Sargento</div><h1 id="ctitle"></h1><p id="ctext"></p><button id="cbtn" type="button"></button></div></div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js"}}</script>
 <script type="module">
@@ -397,6 +398,7 @@ const hips = piv(g, 0, 0.95, 0); part(hips, sph(1), U, 0, 0, 0).scale.set(0.185,
 const spine = piv(hips, 0, 0.04, 0);
 part(spine, cap(0.15, 0.16), U, 0, 0.17, 0).scale.set(1.08 + (o.belly || 0), 1, 0.82 + (o.belly || 0) * 1.6);
 part(spine, sph(1), U, 0, 0.4, 0.005).scale.set(0.215, 0.19, 0.142);
+if (o.gut) part(spine, sph(1), U, 0, 0.17, 0.1).scale.set(0.225, 0.22, 0.215);
 for (const s of [-1, 1]) part(spine, sph(0.082), U, s * 0.2, 0.5, 0);
 part(spine, new THREE.CylinderGeometry(0.052, 0.06, 0.12, 12), skin, 0, 0.63, 0.005);
 part(spine, new THREE.BoxGeometry(0.36, 0.045, 0.2), o.boards === true ? gold : o.white ? M(0xffffff, 0.5) : dark, 0, 0.035, 0).geometry = new THREE.CylinderGeometry(0.172, 0.176, 0.045, 16).scale(1.06, 1, 0.8);
@@ -459,7 +461,7 @@ const bang = marker('!', '#e02b2b'); bang.position.y = 2.35; bang.visible = fals
 const quest = marker('!', '#d59a12'); quest.position.y = 2.3; sgt.add(quest);
 const WP = [[165, 72], [20, 72], [8, 46], [-45, 40], [-110, 30], [-128, 10], [-121, -40], [-50, -51], [-10, -51], [30, -40], [160, -38], [160, 10]].filter(p => !blocked(p[0], p[1], 1));
 let peacocks = [], phase = 0, state = 'menu', found = 0, total = 5, survive = 0, yaw = Math.PI, pitch = 0.3, A = null, audio = null;
-let xp = 0, lvl = 1, stamina = 100, tired = false, boost = 0, ptime = 0, spots = 0, nearPk = 1e9; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12;
+let xp = 0, lvl = 1, stamina = 100, tired = false, boost = 0, ptime = 0, spots = 0, nearPk = 1e9, tafT = 0, tafS = false; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12;
 const PH = [5, 4, 3, 2], SURV = 75;
 function beep(f, d = 0.12, type = 'sine', v = 0.15) { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + d); o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + d); } catch (e) {} }
 function gainXP(n) { xp += n; while (xp >= xpNeed()) { xp -= xpNeed(); lvl++; stamina = maxSt(); toast(`Subiu para o nível ${lvl}! Mais fôlego.`); beep(784, 0.12); setTimeout(() => beep(1047, 0.3), 120); } }
@@ -479,7 +481,7 @@ $('meterLabel').textContent = phase < 4 ? 'Sinal de pavão' : 'Distância do Alm
 }
 function say(who, title, text, btn, fn, cls = '') { state = 'pause'; $('dlg').className = cls; $('who').textContent = who; $('ctitle').textContent = title; $('ctext').innerHTML = text; $('cbtn').textContent = btn; $('overlay').style.display = 'flex'; $('cbtn').onclick = () => { $('overlay').style.display = 'none'; if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } fn(); }; $('cbtn').focus(); }
 const respawn = () => { cabo.position.set(SPAWN[0], Y0, SPAWN[1]); };
-const intro = () => say('Sargento', 'Pavões à solta', 'Cabo Velho, os pavões da ilha fugiram de novo. Eles gostam de ficar atrás dos prédios e no meio das árvores. Recolha os cinco antes que o Almirante perceba.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.<br><br>O sinal fica <b style="color:#5fd16a">verde</b> perto de um pavão e <b style="color:#ff6a55">vermelho</b> longe. No minimapa eles só aparecem quando você chega perto.<br>Ah, e cuidado com o Oficial de serviço (ponto azul no mapa): se ele cruzar com você, vem contar piada.<br>As estrelas douradas do mapa dão 4 segundos de corrida sem cansar. Quanto mais rápida a missão, mais estrelas você ganha.', 'Aceitar missão', () => { respawn(); startPhase(0); });
+const intro = () => say('Sargento', 'Pavões à solta', 'Cabo Velho, os pavões da ilha fugiram de novo. Eles gostam de ficar atrás dos prédios e no meio das árvores. Recolha os cinco antes que o Almirante perceba.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.<br><br>O sinal fica <b style="color:#5fd16a">verde</b> perto de um pavão e <b style="color:#ff6a55">vermelho</b> longe. No minimapa eles só aparecem quando você chega perto.<br>Ah, e cuidado com o Tenente (ponto azul no mapa): se ele cruzar com você, vem contar piada.<br>As estrelas douradas do mapa dão 10 segundos de corrida sem cansar. Na pista de atletismo você corre em supervelocidade e não cansa. Quanto mais rápida a missão, mais estrelas você ganha.', 'Aceitar missão', () => { respawn(); startPhase(0); });
 function nextPhase() {
 const n = phase + 1, sr = starsFor(phase, ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1, ptime); gainXP(60 + phase * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
 if (n < 4) say('Sargento', `Missão ${phase + 1} cumprida`, `${sr}Bom trabalho, Cabo Velho. Mas apareceram mais <b>${PH[n]} pavões</b>, e esses estão mais ariscos. Talvez precise correr.`, 'Próxima missão', () => startPhase(n));
@@ -535,7 +537,7 @@ for (let i = 0; i < 6; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7
 const rope = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 6, 5), new THREE.MeshStandardMaterial({ color: 0xffffff }), 5 * 34), o = new THREE.Object3D(), c = new THREE.Color(); let k = 0;
 for (let l = 1; l < 6; l++) for (let i = 0; i < 34; i++) { o.position.set(POOL.x0 + 0.5 + i * (w - 1) / 33, Y0 + 0.22, POOL.z0 + l * d / 6); o.updateMatrix(); rope.setMatrixAt(k, o.matrix); rope.setColorAt(k++, c.set(i % 4 < 2 ? 0xe23b2b : 0xffffff)); } scene.add(rope);
 }
-const ofc = human({ cap: 'peak', boards: 'dark', white: true, long: true, skin: 0xc99872, hair: 0x3a2a1c }); ofc.position.set(-60, Y0, 36); scene.add(ofc);
+const ofc = human({ cap: 'peak', boards: 'dark', white: true, long: true, gut: true, skin: 0xc99872, hair: 0x3a2a1c }); ofc.position.set(-60, Y0, 36); scene.add(ofc);
 const JOKES = ['Sabe qual é o peixe que caiu do décimo andar? O a-tum!', 'O que o mar disse para a praia? Nada. Só deu uma onda.', 'Por que o navio foi ao psicólogo? Porque estava se sentindo à deriva.', 'O que a âncora faz quando está cansada? Vai fundo no descanso.', 'Qual é o prato preferido do marinheiro? Qualquer um, desde que venha a bordo.', 'Por que o pavão nunca perde nada? Porque está sempre de olho.', 'O que o pato disse para a pata? Vem quá!', 'Sabe por que o mar não seca? Porque ninguém passa a toalha.', 'Qual é o cúmulo da paciência na Marinha? Esperar o navio de papel secar.', 'Por que a bússola terminou o namoro? Porque perdeu o norte.', 'O que um peixe falou para o outro? Nada.', 'Por que o barco é bom aluno? Porque nunca perde o rumo da prosa.'];
 const O = { mode: 'wander', tx: -60, tz: 36, wait: 0, cool: 6, t: 0, sp: 0, j: Math.floor(Math.random() * 12), stuck: 0, who: null }; const bub = $('bubble');
 function bubble(txt, secs, who) { bub.textContent = txt; O.bt = secs; O.who = who || ofc; }
@@ -610,7 +612,7 @@ const starMat = new THREE.MeshStandardMaterial({ color: 0xffc81f, emissive: 0xd8
 function spawnStars() { gstars.forEach(s => scene.remove(s)); gstars = []; for (let i = 0; i < 3; i++) for (let k = 0; k < 400; k++) { const x = -220 + Math.random() * 455, z = -88 + Math.random() * 176; if (blocked(x, z, 1.5) || Math.hypot(x - cabo.position.x, z - cabo.position.z) < 30 || gstars.some(s => Math.hypot(x - s.position.x, z - s.position.z) < 90)) continue; const m = new THREE.Mesh(starGeo, starMat); m.position.set(x, Y0 + 1.3, z); m.castShadow = true; scene.add(m); gstars.push(m); break; } }
 const aura = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd21f, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending })); aura.position.y = 1; aura.scale.set(0.8, 1.25, 0.8); aura.visible = false; cabo.add(aura);
 const auraL = new THREE.PointLight(0xffc040, 0, 14); auraL.position.y = 1.2; cabo.add(auraL);
-function updStars(dt, P) { for (const s of gstars) { s.rotation.y += dt * 2.4; s.position.y = Y0 + 1.3 + Math.sin(T * 3 + s.position.x) * 0.15; if (state === 'play' && Math.hypot(P.x - s.position.x, P.z - s.position.z) < 1.5) { scene.remove(s); gstars = gstars.filter(q => q !== s); boost = 4; stamina = maxSt(); toast('Estrela dourada! 4 segundos sem cansar'); [880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => beep(f, 0.14, 'triangle', 0.12), i * 70)); } }
+function updStars(dt, P) { for (const s of gstars) { s.rotation.y += dt * 2.4; s.position.y = Y0 + 1.3 + Math.sin(T * 3 + s.position.x) * 0.15; if (state === 'play' && Math.hypot(P.x - s.position.x, P.z - s.position.z) < 1.5) { scene.remove(s); gstars = gstars.filter(q => q !== s); boost = 10; stamina = maxSt(); toast('Estrela dourada! 10 segundos sem cansar'); [880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => beep(f, 0.14, 'triangle', 0.12), i * 70)); } }
 aura.visible = boost > 0; aura.material.opacity = 0.18 + Math.sin(T * 14) * 0.07; auraL.intensity = boost > 0 ? 8 : 0; }
 const FY = { t: 12 };
 function updFerry(dt) { const F = window.__ferry; if (!F) return; FY.t += dt; const c = FY.t % 80; let u = c < 30 ? 0 : c < 42 ? (c - 30) / 12 : c < 66 ? 1 : 1 - (c - 66) / 14; u = u * u * (3 - 2 * u);
@@ -622,8 +624,8 @@ function hugPose(g, on) { const u = g.userData; if (on) { u.shL.rotation.x = u.s
 function updHug(dt, P) { const a = hugger.position; H.lock -= dt; if (state !== 'play') return;
 if (H.mode === 'off') { if (phase < 4 && (H.t -= dt) <= 0) { H.t = 3; for (let k = 0; k < 40; k++) { const an = Math.random() * 6.28, r = 26 + Math.random() * 12, x = P.x + Math.cos(an) * r, z = P.z + Math.sin(an) * r; if (!blocked(x, z, 1)) { a.set(x, Y0, z); hugger.visible = true; hugger.scale.setScalar(1); H.mode = 'come'; H.t = 0; bubble('Cabo Velho! Espera, vem cá!', 2.5, hugger); beep(700, 0.1, 'triangle', 0.08); break; } } } return; }
 const dx = P.x - a.x, dz = P.z - a.z, d = Math.hypot(dx, dz) || 1; let sp = 0, tx = P.x, tz = P.z; H.t += dt;
-if (H.mode === 'come') { sp = 9.6; if (d < 1.0) { H.mode = 'hug'; H.t = 0; H.lock = 2.4; vel.set(0, 0, 0); bubble('Que saudade, Cabo Velho! Dá cá um abraço!', 2.4, hugger); beep(523, 0.15, 'triangle', 0.1); setTimeout(() => beep(659, 0.25, 'triangle', 0.1), 150); } else if (H.t > 25) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; } }
-else if (H.mode === 'hug') { cabo.rotation.y = Math.atan2(-dx, -dz); if (H.t > 2.4) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; bubble('Até mais!', 1.5, hugger); } }
+if (H.mode === 'come') { sp = 9.6; if (d < 1.0) { H.mode = 'hug'; H.t = 0; H.dur = 5 + Math.random() * 5; H.lock = H.dur; vel.set(0, 0, 0); bubble('Que saudade, Cabo Velho! Dá cá um abraço!', H.dur, hugger); beep(523, 0.15, 'triangle', 0.1); setTimeout(() => beep(659, 0.25, 'triangle', 0.1), 150); } else if (H.t > 25) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; } }
+else if (H.mode === 'hug') { cabo.rotation.y = Math.atan2(-dx, -dz); if (H.t > H.dur) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; bubble('Até mais!', 1.5, hugger); } }
 else { sp = 7.5; tx = a.x + H.ax * 20; tz = a.z + H.az * 20; if (H.t > 3) hugger.scale.setScalar(Math.max(0.01, 1 - (H.t - 3) * 2)); if (H.t > 3.5) { hugger.visible = false; H.mode = 'off'; H.t = 45 + Math.random() * 50; return; } }
 let v = 0; if (sp) { let ex = tx - a.x, ez = tz - a.z; const el = Math.hypot(ex, ez) || 1; ex /= el; ez /= el; if (H.sideT > 0) { H.sideT -= dt;[ex, ez] = [-ez * H.side, ex * H.side]; } const bx = a.x, bz = a.z; tryMove(hugger, ex * sp * dt, ez * sp * dt, 0.5); const m = Math.hypot(a.x - bx, a.z - bz); v = m / dt; if (m < sp * dt * 0.35) { if ((H.stuck += dt) > 0.25) { H.stuck = 0; H.side = Math.random() < 0.5 ? 1 : -1; H.sideT = 0.7; } } else H.stuck = 0; }
 let da = Math.atan2(tx - a.x, tz - a.z) - hugger.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); hugger.rotation.y += da * Math.min(1, dt * 8);
@@ -653,6 +655,39 @@ const src = audio.createBufferSource(), lp = audio.createBiquadFilter(), g = aud
 if ((amb.g -= dt) <= 0) { amb.g = 7 + Math.random() * 9; const n = 2 + Math.floor(Math.random() * 3), f = 1500 + Math.random() * 500; for (let k = 0; k < n; k++) setTimeout(() => chirp(f, f * 0.62, 0.24, 0.022), k * 280); }
 if ((amb.p -= dt) <= 0) { amb.p = 3.5 + Math.random() * 3; if (state === 'play' && phase < 4 && nearPk < 70) { const v = 0.012 + 0.2 * Math.pow(1 - nearPk / 70, 2); chirp(620, 1250, 0.3, v, 'sawtooth'); setTimeout(() => chirp(1250, 780, 0.5, v, 'sawtooth'), 300); } } }
 window.__x2 = { H, hugger, FY, TROOP, painters, get gstars() { return gstars; }, setBoost: v => boost = v };
+const inRR = (x, z, o, r) => { const cx = (LAWN.x0 + LAWN.x1) / 2, cz = (LAWN.z0 + LAWN.z1) / 2, hx = (LAWN.x1 - LAWN.x0) / 2 + o, hz = (LAWN.z1 - LAWN.z0) / 2 + o, ax = Math.abs(x - cx), az = Math.abs(z - cz); return ax <= hx && az <= hz && Math.hypot(Math.max(ax - (hx - r), 0), Math.max(az - (hz - r), 0)) <= r; };
+const onTrack = (x, z) => inRR(x, z, 11.5, 31.5) && !inRR(x, z, 2, 22);
+function taf() { const e = $('taf'); e.style.opacity = 1; e.style.letterSpacing = '.12em'; [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'square', 0.07), i * 110)); setTimeout(() => { e.style.opacity = 0; e.style.letterSpacing = '.02em'; }, 3500); }
+const SG = { hx: 24, hz: 68, tx: 24, tz: 68, wait: 2, sp: 0 };
+function updSgt(dt) { const a = sgt.position; let v = 0; if (SG.wait > 0) SG.wait -= dt; else { const ex = SG.tx - a.x, ez = SG.tz - a.z, el = Math.hypot(ex, ez); if (el < 0.4) { SG.wait = 2 + Math.random() * 4; for (let k = 0; k < 12; k++) { const an = Math.random() * 6.28, r = 3 + Math.random() * 8, x = SG.hx + Math.cos(an) * r, z = SG.hz + Math.sin(an) * r; if (!blocked(x, z, 1)) { SG.tx = x; SG.tz = z; break; } } } else { const ok = tryMove(sgt, ex / el * 1.3 * dt, ez / el * 1.3 * dt, 0.5); v = ok ? 1.3 : 0; if (!ok) { SG.tx = a.x; SG.tz = a.z; } let da = Math.atan2(ex, ez) - sgt.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); sgt.rotation.y += da * Math.min(1, dt * 5); } }
+SG.sp += (v - SG.sp) * Math.min(1, dt * 6); animHuman(sgt, SG.sp, dt); }
+const insp = human({ cap: 'peak', boards: 'dark', white: true, long: true, skin: 0x8d5a3c }); insp.visible = false; scene.add(insp);
+const IN = { k: 0, sp: 0, C: [[84.5, -1], [109.5, -1], [109.5, 12.5], [84.5, 12.5]] };
+function updInsp(dt) { const c = TROOP.t % 130, a = insp.position; if (c < 18 || c > 70) { insp.visible = false; return; } if (!insp.visible) { insp.visible = true; a.set(95, Y0, -40); IN.k = 0; }
+const hold = c >= 30 && c < 54, t = c >= 54 ? [95, -40] : IN.C[IN.k % 4], ex = t[0] - a.x, ez = t[1] - a.z, el = Math.hypot(ex, ez) || 1, sp = hold ? 1.7 : 4.2; let v = 0;
+if (el < 0.5) { if (c >= 54) { insp.visible = false; return; } if (hold) IN.k++; } else { a.x += ex / el * sp * dt; a.z += ez / el * sp * dt; v = sp; let da = Math.atan2(ex, ez) - insp.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); insp.rotation.y += da * Math.min(1, dt * 6); }
+IN.sp += (v - IN.sp) * Math.min(1, dt * 8); animHuman(insp, IN.sp, dt); }
+function ics(ch) { return canvasTex(60, 40, (g, W, H) => { const B = '#0a3fa8', R = '#d81e2c', Y = '#ffd21f', K = '#111', Wt = '#fff', f = (c, x, y, w, h) => { g.fillStyle = c; g.fillRect(x * W, y * H, w * W + 0.5, h * H + 0.5); }, tri = (c, p) => { g.fillStyle = c; g.beginPath(); p.forEach((q, i) => i ? g.lineTo(q[0] * W, q[1] * H) : g.moveTo(q[0] * W, q[1] * H)); g.closePath(); g.fill(); }, sal = c => { g.strokeStyle = c; g.lineWidth = H * 0.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(W, H); g.moveTo(W, 0); g.lineTo(0, H); g.stroke(); }, cross = c => { f(c, 0.4, 0, 0.2, 1); f(c, 0, 0.38, 1, 0.24); };
+switch (ch) {
+case 'A': f(Wt, 0, 0, .5, 1); f(B, .5, 0, .5, 1); break; case 'B': f(R, 0, 0, 1, 1); break; case 'C': [B, Wt, R, Wt, B].forEach((c, i) => f(c, 0, i / 5, 1, .2)); break;
+case 'D': f(Y, 0, 0, 1, 1); f(B, 0, .25, 1, .5); break; case 'E': f(B, 0, 0, 1, .5); f(R, 0, .5, 1, .5); break; case 'F': f(Wt, 0, 0, 1, 1); tri(R, [[.5, 0], [1, .5], [.5, 1], [0, .5]]); break;
+case 'G': for (let i = 0; i < 6; i++) f(i % 2 ? B : Y, i / 6, 0, 1 / 6, 1); break; case 'H': f(Wt, 0, 0, .5, 1); f(R, .5, 0, .5, 1); break;
+case 'I': f(Y, 0, 0, 1, 1); g.fillStyle = K; g.beginPath(); g.arc(W / 2, H / 2, H * .28, 0, 7); g.fill(); break; case 'J': f(B, 0, 0, 1, 1); f(Wt, 0, 1 / 3, 1, 1 / 3); break;
+case 'K': f(Y, 0, 0, .5, 1); f(B, .5, 0, .5, 1); break; case 'L': f(Y, 0, 0, 1, 1); f(K, .5, 0, .5, .5); f(K, 0, .5, .5, .5); break; case 'M': f(B, 0, 0, 1, 1); sal(Wt); break;
+case 'N': for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) f((i + j) % 2 ? Wt : B, i / 4, j / 4, .25, .25); break; case 'O': f(R, 0, 0, 1, 1); tri(Y, [[0, 0], [0, 1], [1, 1]]); break;
+case 'P': f(B, 0, 0, 1, 1); f(Wt, .3, .3, .4, .4); break; case 'Q': f(Y, 0, 0, 1, 1); break; case 'R': f(R, 0, 0, 1, 1); cross(Y); break; case 'S': f(Wt, 0, 0, 1, 1); f(B, .3, .3, .4, .4); break;
+case 'T': f(R, 0, 0, 1 / 3, 1); f(Wt, 1 / 3, 0, 1 / 3, 1); f(B, 2 / 3, 0, 1 / 3, 1); break; case 'U': f(R, 0, 0, 1, 1); f(Wt, .5, 0, .5, .5); f(Wt, 0, .5, .5, .5); break; case 'V': f(Wt, 0, 0, 1, 1); sal(R); break;
+case 'W': f(B, 0, 0, 1, 1); f(Wt, .17, .17, .66, .66); f(R, .34, .34, .32, .32); break; case 'X': f(Wt, 0, 0, 1, 1); cross(B); break;
+case 'Y': f(Y, 0, 0, 1, 1); g.strokeStyle = R; g.lineWidth = H * .16; for (let i = -3; i < 6; i++) { g.beginPath(); g.moveTo(i * W * .32, H); g.lineTo(i * W * .32 + H, 0); g.stroke(); } break;
+case 'Z': tri(K, [[0, 0], [.5, .5], [0, 1]]); tri(Y, [[0, 0], [1, 0], [.5, .5]]); tri(B, [[1, 0], [1, 1], [.5, .5]]); tri(R, [[0, 1], [1, 1], [.5, .5]]); break;
+default: [R, Wt, R, Wt, R].forEach((c, i) => f(c, 0, i / 5, 1, .2)); } }); }
+{ const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', mat = ch => new THREE.MeshStandardMaterial({ map: ics(ch), side: THREE.DoubleSide, roughness: 0.8 }), mats = [...ABC].map(mat);
+const pf = []; scene.traverse(o => { if (o.isMesh && o.geometry === flagGeo) pf.push(o); }); pf.sort((a, b) => a.position.x - b.position.x).forEach((o, i) => { o.material = mats[i % 26]; });
+const G = new THREE.Group(); G.position.set(160, Y0, 64); G.rotation.y = 0.5; const fg = new THREE.PlaneGeometry(1.25, 0.85); let n = 0;
+for (const [ex, ez] of [[0, 11], [0, -11], [9, 0], [-9, 0]]) for (let k = 0; k < 7; k++) { const t = 0.14 + k * 0.105, m = new THREE.Mesh(fg, mats[n++ % 26]); m.position.set(ex * t, 29 - 29 * t - 0.5, ez * t); m.rotation.y = -Math.atan2(ez, ex); m.castShadow = true; G.add(m); }
+const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute([-.4, 0, 0, .4, 0, 0, -.08, -2.6, 0, .08, -2.6, 0], 3)); pg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 0, 0, 1, 0], 2)); pg.setIndex([0, 2, 1, 1, 2, 3]); pg.computeVertexNormals(); const pm = mat('*');
+for (const z of [-4.3, 4.3]) { const m = new THREE.Mesh(pg, pm); m.position.set(0, 23.8, z); m.rotation.y = Math.PI / 2; m.castShadow = true; G.add(m); } scene.add(G); }
+window.__x3 = { onTrack, insp, SG };
 const camPos = new THREE.Vector3(20, 9, 75), camTgt = new THREE.Vector3(20, 5, 62), dummy = new THREE.Object3D(), V3 = new THREE.Vector3();
 let T = 0, last = performance.now(), toastT = 0;
 function toast(s) { $('toast').textContent = s; $('toast').style.opacity = 1; toastT = 2.4; }
@@ -667,12 +702,12 @@ if (keys.KeyQ) yaw += dt * 1.8; if (keys.KeyE) yaw -= dt * 1.8;
 const P = cabo.position; let speed = 0, meter = 0, good = true; nearPk = 1e9;
 if (state === 'play') {
 let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, iy = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y;
-let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0) l = 0; ptime += dt;
-if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && (!tired || boost > 0); const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? 8.6 : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
+let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0) l = 0; ptime += dt; const onTrk = onTrack(P.x, P.z);
+if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && (!tired || boost > 0 || onTrk); const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? (onTrk ? 14 : 8.6) : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
 const k = Math.min(1, dt * 9); vel.x += (tx - vel.x) * k; vel.z += (tz - vel.z) * k;
 const moved = vel.lengthSq() > 0.01 && tryMove(cabo, vel.x * dt, vel.z * dt); if (!moved) vel.multiplyScalar(0.6); speed = moved ? vel.length() : 0;
 if (speed > 0.4) { let d = Math.atan2(vel.x, vel.z) - cabo.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); cabo.rotation.y += d * Math.min(1, dt * 10); }
-stamina = Math.min(maxSt(), Math.max(0, stamina + (boost > 0 ? 25 : running && speed > 5 ? -19 : speed > 0.4 ? 9 : 16) * dt)); if (stamina <= 0) tired = true; else if (stamina > 30) tired = false; if (boost > 0) { boost -= dt; tired = false; }
+stamina = Math.min(maxSt(), Math.max(0, stamina + (boost > 0 || onTrk ? 25 : running && speed > 5 ? -19 : speed > 0.4 ? 9 : 16) * dt)); if (stamina <= 0) tired = true; else if (stamina > 30) tired = false; if (boost > 0) { boost -= dt; tired = false; } if (running && onTrk && speed > 6) { if ((tafT += dt) >= 5 && !tafS) { tafS = true; taf(); } } else { tafT = 0; tafS = false; }
 if (phase < 4) {
 let near = 1e9; const flee = 3.6 + phase * 0.75;
 for (const p of peacocks) { const u = p.userData, dx = p.position.x - P.x, dz = p.position.z - P.z, d = Math.hypot(dx, dz); near = Math.min(near, d); nearPk = near;
@@ -702,8 +737,8 @@ else if (survive <= 0) { gainXP(300); beep(660, 0.15); setTimeout(() => beep(880
 }
 updOfficer(dt, P); vehiclePush(P); hud();
 } else vel.multiplyScalar(0.8);
-O.bt -= dt; updBirds(dt, P); updTractor(dt, P); updFerry(dt); updHug(dt, P); updStars(dt, P); updTroop(dt); updPainters(dt); updAmb(dt); pool.material.uniforms.uT.value = T;
-animHuman(cabo, speed, dt); hugPose(cabo, H.mode === 'hug'); animHuman(sgt, 0, dt); quest.position.y = 2.3 + Math.sin(T * 3) * 0.06;
+O.bt -= dt; updBirds(dt, P); updTractor(dt, P); updFerry(dt); updHug(dt, P); updStars(dt, P); updTroop(dt); updInsp(dt); updPainters(dt); updAmb(dt); pool.material.uniforms.uT.value = T;
+animHuman(cabo, speed, dt); hugPose(cabo, H.mode === 'hug'); updSgt(dt); quest.position.y = 2.3 + Math.sin(T * 3) * 0.06;
 const fl = $('fill'); fl.style.width = Math.max(4, meter * 100).toFixed(0) + '%'; fl.style.background = `hsl(${(meter * 125).toFixed(0)} 75% 48%)`;
 const D = 6.2, fx = Math.sin(yaw), fz = Math.cos(yaw), cp = Math.cos(pitch), sp2 = Math.sin(pitch);
 V3.set(P.x - fz * -0.55, Y0 + 1.55, P.z + fx * -0.55); camTgt.lerp(V3, Math.min(1, dt * 12));
