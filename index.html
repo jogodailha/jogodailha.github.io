@@ -8,7 +8,8 @@
 html,body{height:100%;margin:0;background:var(--navy);overflow:hidden;font-family:var(--body);color:var(--paper);touch-action:none;user-select:none;-webkit-user-select:none}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .panel{position:fixed;background:rgba(13,34,71,.8);border:1px solid rgba(243,207,122,.55);border-radius:10px;padding:10px 14px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.35)}
-#char{left:16px;top:14px;width:min(210px,44vw)}
+#char{left:16px;top:14px;width:min(240px,50vw)}
+.stars{color:var(--gold);font-size:26px;letter-spacing:.12em}.stars i{color:rgba(255,255,255,.25);font-style:normal}
 #char .nm{font-family:var(--display);font-weight:900;font-size:19px;color:var(--gold);letter-spacing:.06em;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 #lvl{font-family:var(--body);font-size:12px;font-weight:800;color:var(--paper);letter-spacing:.08em;text-transform:uppercase}
 .row{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
@@ -41,7 +42,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 @media (max-width:560px){#meter{left:16px;transform:none;bottom:16px;width:38vw}#qgoal{font-size:13px}}
 </style></head><body>
 <canvas id="c"></canvas>
-<div class="panel" id="char"><div class="nm">Cabo <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div></div></div>
+<div class="panel" id="char"><div class="nm">Cabo Velho <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div></div></div>
 <div class="panel" id="questp"><div id="qname">Missão 1 de 5</div><div id="qgoal">Recolher os pavões: 0 de 5</div></div>
 <div class="panel" id="mapp"><canvas id="map"></canvas></div>
 <div id="meter"><div id="meterLabel">Sinal de pavão</div><div id="bar"><div id="fill"></div></div></div>
@@ -332,7 +333,7 @@ function hullGeo(L, B, Hh) { const s = new THREE.Shape(); s.moveTo(-L / 2, -B / 
 for (let i = 0; i < 6; i++) scene.add(box(0.8, 4, 0.8, darkM, -48 + (i % 2 ? 3 : -3), 1, 92 + Math.floor(i / 2) * 17));
 const F = new THREE.Group(); const h = new THREE.Mesh(hullGeo(38, 9.5, 3.4), hullW); h.position.y = -0.6; h.castShadow = true; F.add(h);
 F.add(box(27, 2.6, 8.4, hullW, -2, 4.1, 0), box(26, 0.9, 8, darkM, -2, 4.3, 0.25), box(26, 0.9, 8, darkM, -2, 4.3, -0.25), box(22, 2.4, 7.6, hullW, -3, 6.6, 0), box(21, 0.8, 7.8, darkM, -3, 6.8, 0), box(6, 2.2, 5, hullW, 5, 9, 0), box(6.2, 0.8, 5.2, darkM, 5, 9.3, 0), box(2, 3, 2, new THREE.MeshStandardMaterial({ color: 0x1f4e9c }), -8, 9.3, 0));
-F.position.set(-58.5, 0, 112); F.rotation.y = Math.PI / 2; scene.add(F);
+F.position.set(-58.5, 0, 112); F.rotation.y = Math.PI / 2; scene.add(F); window.__ferry = F;
 }
 function grayShip(L) { const G = new THREE.Group(); const h = new THREE.Mesh(hullGeo(L, L * 0.12, 6), hullG); h.position.y = -1; G.add(h);
 G.add(box(L * 0.35, 5, L * 0.09, hullG, -L * 0.05, 7.5, 0), box(L * 0.12, 5, L * 0.07, hullG, 0, 12, 0), box(1, 12, 1, hullG, 0, 20, 0), box(L * 0.05, 2.2, L * 0.05, hullG, L * 0.27, 6, 0), box(L * 0.09, 6, L * 0.05, hullG, -L * 0.14, 12.5, 0)); return G; }
@@ -449,16 +450,16 @@ if (vViewPosition.z < uPD - 0.8 && l < 0.3) { if (l < 0.24 || mod(floor(gl_FragC
 { const skip = new Set([ground, wall, pool, curb]); scene.traverse(o => { if (o.isMesh && !skip.has(o)) (Array.isArray(o.material) ? o.material : [o.material]).forEach(seeThrough); }); }
 const $ = id => document.getElementById(id);
 const SPAWN = [20, 62];
-const cabo = human({ cap: 'peak', boards: 'dark', white: true, skin: 0xb9815c }); cabo.position.set(SPAWN[0], Y0, SPAWN[1]); cabo.rotation.y = Math.PI; scene.add(cabo);
+const cabo = human({ cap: 'peak', white: true, skin: 0xb9815c }); cabo.position.set(SPAWN[0], Y0, SPAWN[1]); cabo.rotation.y = Math.PI; scene.add(cabo);
 const sgt = human({ cap: 'peak', boards: 'dark', white: true, skin: 0x8d5a3c, belly: 0.06 }); sgt.position.set(24, Y0, 68); sgt.rotation.y = Math.PI * 1.1; scene.add(sgt);
-const adm = human({ cap: 'peak', boards: true, medals: true, long: true, skin: 0xd6a988, hair: 0xb9b9b9, belly: 0.1 }); adm.scale.setScalar(1.06); adm.visible = false; scene.add(adm);
-const cone = new THREE.Mesh(new THREE.CircleGeometry(42, 24, Math.PI / 2 - 0.87, 1.74).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.2, depthWrite: false })); cone.position.y = 0.25; cone.scale.setScalar(1 / 1.06); adm.add(cone);
+const adm = human({ cap: 'peak', boards: true, medals: true, long: true, skin: 0xd6a988, hair: 0xb9b9b9, belly: 0.1 }); adm.scale.setScalar(2); adm.visible = false; scene.add(adm);
+const cone = new THREE.Mesh(new THREE.CircleGeometry(42, 24, Math.PI / 2 - 0.87, 1.74).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.2, depthWrite: false })); cone.position.y = 0.13; cone.scale.setScalar(0.5); adm.add(cone);
 function marker(txt, bg) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = bg; g.beginPath(); g.arc(32, 32, 30, 0, 7); g.fill(); g.fillStyle = '#fff'; g.font = '900 46px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 32, 35); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); s.scale.setScalar(0.55); return s; }
 const bang = marker('!', '#e02b2b'); bang.position.y = 2.35; bang.visible = false; adm.add(bang);
 const quest = marker('!', '#d59a12'); quest.position.y = 2.3; sgt.add(quest);
 const WP = [[165, 72], [20, 72], [8, 46], [-45, 40], [-110, 30], [-128, 10], [-121, -40], [-50, -51], [-10, -51], [30, -40], [160, -38], [160, 10]].filter(p => !blocked(p[0], p[1], 1));
 let peacocks = [], phase = 0, state = 'menu', found = 0, total = 5, survive = 0, yaw = Math.PI, pitch = 0.3, A = null, audio = null;
-let xp = 0, lvl = 1, stamina = 100, tired = false; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12;
+let xp = 0, lvl = 1, stamina = 100, tired = false, boost = 0, ptime = 0, spots = 0, nearPk = 1e9; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12;
 const PH = [5, 4, 3, 2], SURV = 75;
 function beep(f, d = 0.12, type = 'sine', v = 0.15) { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + d); o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + d); } catch (e) {} }
 function gainXP(n) { xp += n; while (xp >= xpNeed()) { xp -= xpNeed(); lvl++; stamina = maxSt(); toast(`Subiu para o nível ${lvl}! Mais fôlego.`); beep(784, 0.12); setTimeout(() => beep(1047, 0.3), 120); } }
@@ -468,21 +469,21 @@ function startPhase(n) {
 phase = n; peacocks.forEach(p => scene.remove(p)); peacocks = []; found = 0; adm.visible = false; bang.visible = false; vel.set(0, 0, 0); quest.visible = false;
 if (n < 4) { total = PH[n]; for (let i = 0; i < total; i++) { const p = peacock(), [x, z] = hideSpot(); p.position.set(x, Y0, z); p.rotation.y = Math.random() * 6; p.userData.tx = x; p.userData.tz = z; scene.add(p); peacocks.push(p); } }
 else { survive = SURV; let far = WP[0]; for (const w of WP) if (Math.hypot(w[0] - cabo.position.x, w[1] - cabo.position.z) > Math.hypot(far[0] - cabo.position.x, far[1] - cabo.position.z)) far = w; adm.position.set(far[0], Y0, far[1]); adm.visible = true; A = { mode: 'patrol', wp: WP.indexOf(far), lx: 0, lz: 0, t: 0, stuck: 0, side: 0, sideT: 0, sp: 0 }; }
-state = 'play'; hud();
+ptime = 0; spots = 0; boost = 0; spawnStars(); state = 'play'; hud();
 }
 function hud() {
-$('lvl').textContent = `Nível ${lvl}`; $('xpf').style.width = (100 * xp / xpNeed()).toFixed(0) + '%'; $('stf').style.width = (100 * stamina / maxSt()).toFixed(0) + '%'; $('stf').style.background = tired ? 'var(--alert)' : '';
+$('lvl').textContent = `Nível ${lvl}`; $('xpf').style.width = (100 * xp / xpNeed()).toFixed(0) + '%'; $('stf').style.width = (100 * stamina / maxSt()).toFixed(0) + '%'; $('stf').style.background = boost > 0 ? 'var(--gold)' : tired ? 'var(--alert)' : '';
 $('qname').textContent = phase < 4 ? `Missão ${phase + 1} de 5 · Pavões à solta` : 'Missão 5 de 5 · A ronda do Almirante';
-$('qgoal').textContent = phase < 4 ? `Recolher os pavões: ${found} de ${total}` : `Não ser visto por ${Math.ceil(Math.max(0, survive))} s`;
+$('qgoal').textContent = phase < 4 ? `Recolher os pavões: ${found} de ${total}` : `Não ser visto por ${Math.ceil(Math.max(0, survive))} s`; if (phase < 4) $('qgoal').textContent += ` · ${fmt(ptime)}`;
 $('meterLabel').textContent = phase < 4 ? 'Sinal de pavão' : 'Distância do Almirante';
 }
 function say(who, title, text, btn, fn, cls = '') { state = 'pause'; $('dlg').className = cls; $('who').textContent = who; $('ctitle').textContent = title; $('ctext').innerHTML = text; $('cbtn').textContent = btn; $('overlay').style.display = 'flex'; $('cbtn').onclick = () => { $('overlay').style.display = 'none'; if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } fn(); }; $('cbtn').focus(); }
 const respawn = () => { cabo.position.set(SPAWN[0], Y0, SPAWN[1]); };
-const intro = () => say('Sargento', 'Pavões à solta', 'Cabo, os pavões da ilha fugiram de novo. Eles gostam de ficar atrás dos prédios e no meio das árvores. Recolha os cinco antes que o Almirante perceba.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.<br><br>O sinal fica <b style="color:#5fd16a">verde</b> perto de um pavão e <b style="color:#ff6a55">vermelho</b> longe. No minimapa eles só aparecem quando você chega perto.<br>Ah, e cuidado com o Oficial de serviço (ponto azul no mapa): se ele cruzar com você, vem contar piada.', 'Aceitar missão', () => { respawn(); startPhase(0); });
+const intro = () => say('Sargento', 'Pavões à solta', 'Cabo Velho, os pavões da ilha fugiram de novo. Eles gostam de ficar atrás dos prédios e no meio das árvores. Recolha os cinco antes que o Almirante perceba.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.<br><br>O sinal fica <b style="color:#5fd16a">verde</b> perto de um pavão e <b style="color:#ff6a55">vermelho</b> longe. No minimapa eles só aparecem quando você chega perto.<br>Ah, e cuidado com o Oficial de serviço (ponto azul no mapa): se ele cruzar com você, vem contar piada.<br>As estrelas douradas do mapa dão 4 segundos de corrida sem cansar. Quanto mais rápida a missão, mais estrelas você ganha.', 'Aceitar missão', () => { respawn(); startPhase(0); });
 function nextPhase() {
-const n = phase + 1; gainXP(60 + phase * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
-if (n < 4) say('Sargento', `Missão ${phase + 1} cumprida`, `Bom trabalho, Cabo. Mas apareceram mais <b>${PH[n]} pavões</b>, e esses estão mais ariscos. Talvez precise correr.`, 'Próxima missão', () => startPhase(n));
-else say('Sargento', 'Missão final', `Cabo, más notícias: o Almirante saiu para a ronda e você está fora do posto. Fique <b>${SURV} segundos</b> sem ser pego.<br><br>O cone amarelo mostra para onde ele olha. Prédios bloqueiam a visão dele, e debaixo das árvores ele só enxerga de perto. Ele aparece em vermelho no minimapa.`, 'Encarar', () => startPhase(4));
+const n = phase + 1, sr = starsFor(phase, ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1, ptime); gainXP(60 + phase * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
+if (n < 4) say('Sargento', `Missão ${phase + 1} cumprida`, `${sr}Bom trabalho, Cabo Velho. Mas apareceram mais <b>${PH[n]} pavões</b>, e esses estão mais ariscos. Talvez precise correr.`, 'Próxima missão', () => startPhase(n));
+else say('Sargento', 'Missão final', `${sr}Cabo Velho, más notícias: o Almirante saiu para a ronda e você está fora do posto. Fique <b>${SURV} segundos</b> sem ser pego.<br><br>O cone amarelo mostra para onde ele olha. Prédios bloqueiam a visão dele, e debaixo das árvores ele só enxerga de perto. Ele aparece em vermelho no minimapa.`, 'Encarar', () => startPhase(4));
 }
 const keys = {}; addEventListener('keydown', e => { keys[e.code] = 1; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault(); }); addEventListener('keyup', e => keys[e.code] = 0); addEventListener('blur', () => { for (const k in keys) keys[k] = 0; });
 const joy = { id: null, x0: 0, y0: 0, x: 0, y: 0 }, drag = { id: null, x: 0, y: 0 }, jb = $('joy'), jk = $('knob');
@@ -503,6 +504,7 @@ function drawMap(T) { const g = mm.getContext('2d'); g.setTransform(1, 0, 0, 1, 
 const P = cabo.position; g.fillStyle = '#f0b429'; g.beginPath(); g.arc(mx(sgt.position.x), mz(sgt.position.z), 2.4, 0, 7); g.fill();
 if (phase < 4) for (const p of peacocks) { const d = Math.hypot(p.position.x - P.x, p.position.z - P.z); if (d < 38) { g.fillStyle = '#2fe36a'; g.strokeStyle = '#063'; g.beginPath(); g.arc(mx(p.position.x), mz(p.position.z), 2.6 + Math.sin(T * 6) * 0.7, 0, 7); g.fill(); g.stroke(); } }
 else if (adm.visible) { const ax = mx(adm.position.x), az = mz(adm.position.z), r = adm.rotation.y; g.fillStyle = A && A.mode === 'chase' ? 'rgba(255,70,50,.45)' : 'rgba(255,224,102,.4)'; g.beginPath(); g.moveTo(ax, az); g.arc(ax, az, 42 * mk, Math.PI / 2 - r - 0.87, Math.PI / 2 - r + 0.87); g.closePath(); g.fill(); g.fillStyle = '#ff3b2b'; g.strokeStyle = '#fff'; g.beginPath(); g.arc(ax, az, 3.2, 0, 7); g.fill(); g.stroke(); }
+g.fillStyle = '#ffd21f'; for (const s of gstars) { g.beginPath(); g.arc(mx(s.position.x), mz(s.position.z), 2.2, 0, 7); g.fill(); }
 g.fillStyle = '#59b7f0'; g.strokeStyle = '#0d2247'; g.beginPath(); g.arc(mx(ofc.position.x), mz(ofc.position.z), 2.6, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#2e7d32'; g.fillRect(mx(trac.position.x) - 2.5, mz(trac.position.z) - 1.5, 5, 3);
 g.save(); g.translate(mx(P.x), mz(P.z)); g.rotate(-cabo.rotation.y); g.fillStyle = '#fff'; g.strokeStyle = '#0d2247'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, 6); g.lineTo(-4, -4); g.lineTo(0, -1.5); g.lineTo(4, -4); g.closePath(); g.fill(); g.stroke(); g.restore(); }
 { // pool: animated water, coping, ladders, starting blocks
@@ -535,11 +537,11 @@ for (let l = 1; l < 6; l++) for (let i = 0; i < 34; i++) { o.position.set(POOL.x
 }
 const ofc = human({ cap: 'peak', boards: 'dark', white: true, long: true, skin: 0xc99872, hair: 0x3a2a1c }); ofc.position.set(-60, Y0, 36); scene.add(ofc);
 const JOKES = ['Sabe qual é o peixe que caiu do décimo andar? O a-tum!', 'O que o mar disse para a praia? Nada. Só deu uma onda.', 'Por que o navio foi ao psicólogo? Porque estava se sentindo à deriva.', 'O que a âncora faz quando está cansada? Vai fundo no descanso.', 'Qual é o prato preferido do marinheiro? Qualquer um, desde que venha a bordo.', 'Por que o pavão nunca perde nada? Porque está sempre de olho.', 'O que o pato disse para a pata? Vem quá!', 'Sabe por que o mar não seca? Porque ninguém passa a toalha.', 'Qual é o cúmulo da paciência na Marinha? Esperar o navio de papel secar.', 'Por que a bússola terminou o namoro? Porque perdeu o norte.', 'O que um peixe falou para o outro? Nada.', 'Por que o barco é bom aluno? Porque nunca perde o rumo da prosa.'];
-const O = { mode: 'wander', tx: -60, tz: 36, wait: 0, cool: 6, t: 0, sp: 0, j: Math.floor(Math.random() * 12), stuck: 0 }; const bub = $('bubble');
-function bubble(txt, secs) { bub.textContent = txt; O.bt = secs; }
+const O = { mode: 'wander', tx: -60, tz: 36, wait: 0, cool: 6, t: 0, sp: 0, j: Math.floor(Math.random() * 12), stuck: 0, who: null }; const bub = $('bubble');
+function bubble(txt, secs, who) { bub.textContent = txt; O.bt = secs; O.who = who || ofc; }
 function updOfficer(dt, P) {
 const a = ofc.position, dx = P.x - a.x, dz = P.z - a.z, d = Math.hypot(dx, dz); let sp = 0, tx = O.tx, tz = O.tz; O.cool -= dt;
-if (O.mode === 'wander') { if (O.cool <= 0 && d < 15 && los(a.x, a.z, P.x, P.z)) { O.mode = 'chase'; O.t = 0; bubble('Ei, Cabo! Espera aí, tenho uma ótima!', 2.5); beep(520, 0.08, 'triangle', 0.08); }
+if (O.mode === 'wander') { if (O.cool <= 0 && d < 15 && los(a.x, a.z, P.x, P.z)) { O.mode = 'chase'; O.t = 0; bubble('Ei, Cabo Velho! Espera aí, tenho uma ótima!', 2.5); beep(520, 0.08, 'triangle', 0.08); }
 else if (O.wait > 0) O.wait -= dt; else if (Math.hypot(tx - a.x, tz - a.z) < 1) { O.wait = 1 + Math.random() * 3; for (let k = 0; k < 20; k++) { const x = -220 + Math.random() * 455, z = -88 + Math.random() * 176; if (!blocked(x, z, 1.5) && los(a.x, a.z, x, z) && Math.hypot(x - a.x, z - a.z) > 15) { O.tx = x; O.tz = z; break; } } } else sp = 1.7; }
 if (O.mode === 'chase') { O.t += dt; tx = P.x; tz = P.z; sp = 6.3; if (d < 2.3) { O.mode = 'joke'; O.t = 0; bubble(JOKES[O.j++ % JOKES.length], 6.5); beep(392, 0.1, 'triangle', 0.08); setTimeout(() => beep(330, 0.2, 'triangle', 0.08), 110); } else if (O.t > 14 || d > 70) { O.mode = 'wander'; O.cool = 12; bubble('Depois eu conto...', 2); } }
 else if (O.mode === 'joke') { O.t += dt; tx = P.x; tz = P.z; if (O.t > 6.5) { O.mode = 'wander'; O.cool = 28; O.tx = a.x; O.tz = a.z; O.wait = 0; } }
@@ -549,7 +551,7 @@ if (O.mode !== 'wander' || sp) { let da = Math.atan2(tx - a.x, tz - a.z) - ofc.r
 O.sp += (v - O.sp) * Math.min(1, dt * 8); animHuman(ofc, O.sp, dt);
 if (O.mode === 'joke') { const u = ofc.userData; u.shR.rotation.x = -1.2 + Math.sin(O.t * 9) * 0.25; u.elR.rotation.x = -1.1; u.spine.rotation.x = Math.sin(O.t * 7) * 0.05; }
 }
-function placeBubble() { if (!(O.bt > 0) || state !== 'play') { bub.style.opacity = 0; return; } V3.set(ofc.position.x, Y0 + 2.25, ofc.position.z).project(camera); if (V3.z > 1) { bub.style.opacity = 0; return; } bub.style.opacity = 1; bub.style.left = Math.min(innerWidth - 150, Math.max(150, (V3.x * 0.5 + 0.5) * innerWidth)) + 'px'; bub.style.top = Math.max(120, (-V3.y * 0.5 + 0.5) * innerHeight) + 'px'; }
+function placeBubble() { if (!(O.bt > 0) || state !== 'play') { bub.style.opacity = 0; return; } V3.set(O.who.position.x, Y0 + 2.25, O.who.position.z).project(camera); if (V3.z > 1) { bub.style.opacity = 0; return; } bub.style.opacity = 1; bub.style.left = Math.min(innerWidth - 150, Math.max(150, (V3.x * 0.5 + 0.5) * innerWidth)) + 'px'; bub.style.top = Math.max(120, (-V3.y * 0.5 + 0.5) * innerHeight) + 'px'; }
 const birds = []; let wantLanded = 3, landT = 0;
 { const bodyG = new THREE.SphereGeometry(0.13, 10, 8).scale(0.8, 0.8, 1.9), wingG = new THREE.BufferGeometry(); wingG.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0.16, 0.62, 0, 0.02, 0, 0, -0.14, 0.62, 0, 0.02, 0.5, 0, -0.2, 0, 0, -0.14], 3)); wingG.computeVertexNormals();
 const bm = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.8 }), wm = new THREE.MeshStandardMaterial({ color: 0x8e99a6, roughness: 0.8, side: THREE.DoubleSide }), bk = new THREE.MeshStandardMaterial({ color: 0xe8a020 });
@@ -598,6 +600,59 @@ for (const [m, r] of wheels) m.rotation.x += TR.v * dt / r; p.y = Y0 + Math.sin(
 }
 function vehiclePush(P) { for (const [o, r] of [[trac.position, 1.7], [trail.position, 1.9]]) { const dx = P.x - o.x, dz = P.z - o.z, d = Math.hypot(dx, dz); if (d < r && d > 0.01) { const nx = o.x + dx / d * r, nz = o.z + dz / d * r; if (!blocked(nx, nz)) { P.x = nx; P.z = nz; } } } }
 window.__x = { ofc, O, birds, trac, TP, TR };
+const T3 = [150, 130, 110, 90], T2 = [240, 210, 180, 150], fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+let REC = {}; try { REC = JSON.parse(localStorage.getItem('pavoes_rec') || '{}'); } catch (e) {}
+function starsFor(n, st, time) { const r = REC[n] || {}; let rec = ''; if (time != null) { if (r.t == null || time < r.t) { rec = r.t == null ? ' · primeiro recorde!' : ' · novo recorde!'; r.t = Math.round(time); } else rec = ` · recorde ${fmt(r.t)}`; } r.s = Math.max(r.s || 0, st); REC[n] = r; try { localStorage.setItem('pavoes_rec', JSON.stringify(REC)); } catch (e) {}
+return `<span class="stars">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span> ${time != null ? 'Tempo ' + fmt(time) + rec : (spots ? `Visto ${spots} vez${spots > 1 ? 'es' : ''}` : 'Nunca foi visto') + ` · melhor: ${r.s} estrela${r.s > 1 ? 's' : ''}`}<br><br>`; }
+let gstars = [];
+const starGeo = (() => { const s = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 + Math.PI / 2, r = i % 2 ? 0.28 : 0.65; i ? s.lineTo(Math.cos(a) * r, Math.sin(a) * r) : s.moveTo(Math.cos(a) * r, Math.sin(a) * r); } s.closePath(); return new THREE.ExtrudeGeometry(s, { depth: 0.16, bevelEnabled: false }).translate(0, 0, -0.08); })();
+const starMat = new THREE.MeshStandardMaterial({ color: 0xffc81f, emissive: 0xd89400, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.3 });
+function spawnStars() { gstars.forEach(s => scene.remove(s)); gstars = []; for (let i = 0; i < 3; i++) for (let k = 0; k < 400; k++) { const x = -220 + Math.random() * 455, z = -88 + Math.random() * 176; if (blocked(x, z, 1.5) || Math.hypot(x - cabo.position.x, z - cabo.position.z) < 30 || gstars.some(s => Math.hypot(x - s.position.x, z - s.position.z) < 90)) continue; const m = new THREE.Mesh(starGeo, starMat); m.position.set(x, Y0 + 1.3, z); m.castShadow = true; scene.add(m); gstars.push(m); break; } }
+const aura = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffd21f, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending })); aura.position.y = 1; aura.scale.set(0.8, 1.25, 0.8); aura.visible = false; cabo.add(aura);
+const auraL = new THREE.PointLight(0xffc040, 0, 14); auraL.position.y = 1.2; cabo.add(auraL);
+function updStars(dt, P) { for (const s of gstars) { s.rotation.y += dt * 2.4; s.position.y = Y0 + 1.3 + Math.sin(T * 3 + s.position.x) * 0.15; if (state === 'play' && Math.hypot(P.x - s.position.x, P.z - s.position.z) < 1.5) { scene.remove(s); gstars = gstars.filter(q => q !== s); boost = 4; stamina = maxSt(); toast('Estrela dourada! 4 segundos sem cansar'); [880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => beep(f, 0.14, 'triangle', 0.12), i * 70)); } }
+aura.visible = boost > 0; aura.material.opacity = 0.18 + Math.sin(T * 14) * 0.07; auraL.intensity = boost > 0 ? 8 : 0; }
+const FY = { t: 12 };
+function updFerry(dt) { const F = window.__ferry; if (!F) return; FY.t += dt; const c = FY.t % 80; let u = c < 30 ? 0 : c < 42 ? (c - 30) / 12 : c < 66 ? 1 : 1 - (c - 66) / 14; u = u * u * (3 - 2 * u);
+F.position.set(-58.5 - u * u * 260, Math.sin(T * 1.1) * 0.12, 112 + u * 520); F.rotation.y = Math.PI / 2 + u * 0.5; F.visible = u < 0.999;
+if (FY.last !== undefined && ((FY.last < 30 && c >= 30) || (FY.last < 66 && c >= 66))) beep(150, 1.2, 'sawtooth', 0.05); FY.last = c; }
+const hugger = human({ cap: 'peak', boards: 'dark', white: true, skin: 0xa87550 }); hugger.visible = false; scene.add(hugger);
+const H = { mode: 'off', t: 22 + Math.random() * 25, lock: 0, sp: 0, ax: 0, az: 0, side: 1, sideT: 0, stuck: 0 };
+function hugPose(g, on) { const u = g.userData; if (on) { u.shL.rotation.x = u.shR.rotation.x = -1.25; u.shL.rotation.z = 0.5; u.shR.rotation.z = -0.5; u.elL.rotation.x = u.elR.rotation.x = -0.7; } else { u.shL.rotation.z = -0.09; u.shR.rotation.z = 0.09; } }
+function updHug(dt, P) { const a = hugger.position; H.lock -= dt; if (state !== 'play') return;
+if (H.mode === 'off') { if (phase < 4 && (H.t -= dt) <= 0) { H.t = 3; for (let k = 0; k < 40; k++) { const an = Math.random() * 6.28, r = 26 + Math.random() * 12, x = P.x + Math.cos(an) * r, z = P.z + Math.sin(an) * r; if (!blocked(x, z, 1)) { a.set(x, Y0, z); hugger.visible = true; hugger.scale.setScalar(1); H.mode = 'come'; H.t = 0; bubble('Cabo Velho! Espera, vem cá!', 2.5, hugger); beep(700, 0.1, 'triangle', 0.08); break; } } } return; }
+const dx = P.x - a.x, dz = P.z - a.z, d = Math.hypot(dx, dz) || 1; let sp = 0, tx = P.x, tz = P.z; H.t += dt;
+if (H.mode === 'come') { sp = 9.6; if (d < 1.0) { H.mode = 'hug'; H.t = 0; H.lock = 2.4; vel.set(0, 0, 0); bubble('Que saudade, Cabo Velho! Dá cá um abraço!', 2.4, hugger); beep(523, 0.15, 'triangle', 0.1); setTimeout(() => beep(659, 0.25, 'triangle', 0.1), 150); } else if (H.t > 25) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; } }
+else if (H.mode === 'hug') { cabo.rotation.y = Math.atan2(-dx, -dz); if (H.t > 2.4) { H.mode = 'leave'; H.t = 0; H.ax = -dx / d; H.az = -dz / d; bubble('Até mais!', 1.5, hugger); } }
+else { sp = 7.5; tx = a.x + H.ax * 20; tz = a.z + H.az * 20; if (H.t > 3) hugger.scale.setScalar(Math.max(0.01, 1 - (H.t - 3) * 2)); if (H.t > 3.5) { hugger.visible = false; H.mode = 'off'; H.t = 45 + Math.random() * 50; return; } }
+let v = 0; if (sp) { let ex = tx - a.x, ez = tz - a.z; const el = Math.hypot(ex, ez) || 1; ex /= el; ez /= el; if (H.sideT > 0) { H.sideT -= dt;[ex, ez] = [-ez * H.side, ex * H.side]; } const bx = a.x, bz = a.z; tryMove(hugger, ex * sp * dt, ez * sp * dt, 0.5); const m = Math.hypot(a.x - bx, a.z - bz); v = m / dt; if (m < sp * dt * 0.35) { if ((H.stuck += dt) > 0.25) { H.stuck = 0; H.side = Math.random() < 0.5 ? 1 : -1; H.sideT = 0.7; } } else H.stuck = 0; }
+let da = Math.atan2(tx - a.x, tz - a.z) - hugger.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); hugger.rotation.y += da * Math.min(1, dt * 8);
+H.sp += (v - H.sp) * Math.min(1, dt * 8); animHuman(hugger, H.sp, dt); hugPose(hugger, H.mode === 'hug'); }
+const TROOP = { n: 24, t: 100, m: [] };
+{ const wm = new THREE.MeshStandardMaterial({ color: 0xfafaf7, roughness: 0.7 }), sk = new THREE.MeshStandardMaterial({ color: 0xb98a66 });
+TROOP.m = [[new THREE.CapsuleGeometry(0.25, 1.1, 4, 10), wm, 0.82], [new THREE.SphereGeometry(0.16, 10, 8), sk, 1.72], [new THREE.CylinderGeometry(0.2, 0.17, 0.1, 12), wm, 1.9]].map(([g, m, y]) => { const im = new THREE.InstancedMesh(g, m, TROOP.n); im.castShadow = true; im.userData.y = y; im.frustumCulled = false; scene.add(im); return im; });
+TROOP.p = Array.from({ length: TROOP.n }, (_, i) => { const sx = 97 + (i % 6 - 2.5) * 2.2, sz = 2 + Math.floor(i / 6) * 2.4, pts = [[97, -40], [sx, -21], [sx, sz]], L1 = Math.hypot(sx - 97, 19), L2 = sz + 21; return { pts, L1, L: L1 + L2, d: (TROOP.n - 1 - i) * 0.35 }; }); }
+function updTroop(dt) { TROOP.t += dt; const c = TROOP.t % 130, o = dummy; o.rotation.set(0, 0, 0);
+TROOP.p.forEach((p, i) => { let u = -1; if (c < 30) u = (c - p.d) * 3.2; else if (c < 54) u = p.L; else if (c < 84) u = p.L - (c - 54 - (TROOP.n * 0.35 - p.d)) * 3.2; const vis = u > 0; u = Math.min(Math.max(u, 0), p.L);
+const [a, b, s] = p.pts, k = u < p.L1 ? u / p.L1 : 1, k2 = u < p.L1 ? 0 : (u - p.L1) / (p.L - p.L1), x = a[0] + (b[0] - a[0]) * k, z = a[1] + (b[1] - a[1]) * k + (s[1] - b[1]) * k2, mv = vis && u < p.L - 0.01;
+for (const im of TROOP.m) { o.position.set(x, Y0 + im.userData.y + (mv ? Math.abs(Math.sin(u * 2.4)) * 0.05 : 0), z); o.scale.setScalar(vis ? 1 : 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); } });
+for (const im of TROOP.m) im.instanceMatrix.needsUpdate = true; o.scale.setScalar(1); }
+const painters = [];
+{ let iw = 0, ie = 0; outPts.forEach((p, i) => { if (p.x < outPts[iw].x) iw = i; if (p.x > outPts[ie].x) ie = i; }); const N = outPts.length, canM = M(0xb0b6bb, 0.4), wood = M(0x9a6a3a), wht = M(0xffffff, 0.4);
+for (const i of [iw - 7, iw + 7, ie - 7, ie + 7]) { const p = outPts[(i + N) % N], l = Math.hypot(p.x, p.z), s = human({ collar: true, skin: [0xb9815c, 0x8d5a3c, 0xd6a988, 0xa87550][painters.length] }), u = s.userData;
+s.position.set(p.x * 0.976, Y0 - 0.4, p.z * 0.976); s.rotation.y = Math.atan2(p.x / l, p.z / l);
+u.thL.rotation.x = -1.5; u.knL.rotation.x = 1.9; u.thR.rotation.x = 0.15; u.knR.rotation.x = 1.75; u.spine.rotation.x = 0.55; u.shL.rotation.x = -0.3; u.elL.rotation.x = -0.9; u.elR.rotation.x = -0.25;
+const br = new THREE.Group(); br.position.set(0, -0.3, 0.03); br.rotation.x = 0.9; part(br, new THREE.CylinderGeometry(0.012, 0.012, 0.22, 6), wood, 0, -0.06, 0); part(br, new THREE.BoxGeometry(0.07, 0.07, 0.025), wht, 0, -0.2, 0); u.elR.add(br);
+const can = new THREE.Group(); part(can, new THREE.CylinderGeometry(0.13, 0.13, 0.24, 12), canM, 0, 0.12, 0); part(can, new THREE.CylinderGeometry(0.115, 0.115, 0.02, 12), wht, 0, 0.245, 0); can.position.set(p.x * 0.976 - p.z / l * 0.6, Y0, p.z * 0.976 + p.x / l * 0.6); scene.add(can, s); painters.push(s); } }
+function updPainters(dt) { painters.forEach((s, i) => { const u = s.userData, w = Math.sin(T * 3.2 + i * 1.7); u.shR.rotation.x = -1.05 + w * 0.22; u.shR.rotation.z = 0.09 + Math.cos(T * 3.2 + i * 1.7) * 0.12; u.head.rotation.x = 0.25; u.spine.rotation.y = w * 0.05; }); }
+const amb = { on: false, g: 6, p: 4 };
+function chirp(f0, f1, d, v, type = 'triangle') { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime; o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(audio.destination); o.start(t); o.stop(t + d + 0.02); } catch (e) {} }
+function updAmb(dt) { if (!audio) return;
+if (!amb.on) { amb.on = true; try { const len = audio.sampleRate * 4, buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0); let b = 0; for (let i = 0; i < len; i++) { b = b * 0.98 + (Math.random() * 2 - 1) * 0.02; d[i] = b * 5 * Math.min(1, i / 3000, (len - i) / 3000); }
+const src = audio.createBufferSource(), lp = audio.createBiquadFilter(), g = audio.createGain(), lfo = audio.createOscillator(), lg = audio.createGain(); src.buffer = buf; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 700; g.gain.value = 0.045; lfo.frequency.value = 0.12; lg.gain.value = 0.025; lfo.connect(lg).connect(g.gain); src.connect(lp).connect(g).connect(audio.destination); src.start(); lfo.start(); } catch (e) {} }
+if ((amb.g -= dt) <= 0) { amb.g = 7 + Math.random() * 9; const n = 2 + Math.floor(Math.random() * 3), f = 1500 + Math.random() * 500; for (let k = 0; k < n; k++) setTimeout(() => chirp(f, f * 0.62, 0.24, 0.022), k * 280); }
+if ((amb.p -= dt) <= 0) { amb.p = 3.5 + Math.random() * 3; if (state === 'play' && phase < 4 && nearPk < 70) { const v = 0.012 + 0.2 * Math.pow(1 - nearPk / 70, 2); chirp(620, 1250, 0.3, v, 'sawtooth'); setTimeout(() => chirp(1250, 780, 0.5, v, 'sawtooth'), 300); } } }
+window.__x2 = { H, hugger, FY, TROOP, painters, get gstars() { return gstars; }, setBoost: v => boost = v };
 const camPos = new THREE.Vector3(20, 9, 75), camTgt = new THREE.Vector3(20, 5, 62), dummy = new THREE.Object3D(), V3 = new THREE.Vector3();
 let T = 0, last = performance.now(), toastT = 0;
 function toast(s) { $('toast').textContent = s; $('toast').style.opacity = 1; toastT = 2.4; }
@@ -609,18 +664,18 @@ cars.forEach((c, i) => { const x = ((c.x0 + c.v * T + 7000) % 14000 + 14000) % 1
 waveFlag(flagGeo, 3.2, T); waveFlag(bigFlagGeo, 6.4, T);
 if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
 if (keys.KeyQ) yaw += dt * 1.8; if (keys.KeyE) yaw -= dt * 1.8;
-const P = cabo.position; let speed = 0, meter = 0, good = true;
+const P = cabo.position; let speed = 0, meter = 0, good = true; nearPk = 1e9;
 if (state === 'play') {
 let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, iy = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y;
-let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y);
-if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && !tired; const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? 8.6 : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
+let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0) l = 0; ptime += dt;
+if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && (!tired || boost > 0); const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? 8.6 : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
 const k = Math.min(1, dt * 9); vel.x += (tx - vel.x) * k; vel.z += (tz - vel.z) * k;
 const moved = vel.lengthSq() > 0.01 && tryMove(cabo, vel.x * dt, vel.z * dt); if (!moved) vel.multiplyScalar(0.6); speed = moved ? vel.length() : 0;
 if (speed > 0.4) { let d = Math.atan2(vel.x, vel.z) - cabo.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); cabo.rotation.y += d * Math.min(1, dt * 10); }
-stamina = Math.min(maxSt(), Math.max(0, stamina + (running && speed > 5 ? -19 : speed > 0.4 ? 9 : 16) * dt)); if (stamina <= 0) tired = true; else if (stamina > 30) tired = false;
+stamina = Math.min(maxSt(), Math.max(0, stamina + (boost > 0 ? 25 : running && speed > 5 ? -19 : speed > 0.4 ? 9 : 16) * dt)); if (stamina <= 0) tired = true; else if (stamina > 30) tired = false; if (boost > 0) { boost -= dt; tired = false; }
 if (phase < 4) {
 let near = 1e9; const flee = 3.6 + phase * 0.75;
-for (const p of peacocks) { const u = p.userData, dx = p.position.x - P.x, dz = p.position.z - P.z, d = Math.hypot(dx, dz); near = Math.min(near, d);
+for (const p of peacocks) { const u = p.userData, dx = p.position.x - P.x, dz = p.position.z - P.z, d = Math.hypot(dx, dz); near = Math.min(near, d); nearPk = near;
 if (d < 1.7) { scene.remove(p); peacocks = peacocks.filter(q => q !== p); found++; beep(990, 0.1, 'triangle'); setTimeout(() => beep(1320, 0.18, 'triangle'), 90); toast(found < total ? `Pavão recolhido! +${30 + phase * 10} XP` : `Último pavão! +${30 + phase * 10} XP`); gainXP(30 + phase * 10); continue; }
 let sp = 1.1, tx = u.tx, tz = u.tz;
 if (d < 9 + phase * 1.5) { sp = flee; tx = p.position.x + dx / d * 8; tz = p.position.z + dz / d * 8; u.wait = 0; if (blocked(tx, tz, 1)) { const s = u.side || (u.side = Math.random() < 0.5 ? 1 : -1); tx = p.position.x - dz / d * 8 * s; tz = p.position.z + dx / d * 8 * s; if (blocked(tx, tz, 1)) u.side = -s; } }
@@ -632,23 +687,23 @@ meter = Math.max(0, 1 - near / 110); good = true; if (!peacocks.length && state 
 const a = adm.position, dx = P.x - a.x, dz = P.z - a.z, d = Math.hypot(dx, dz), hidden = inTrees(P.x, P.z);
 let ang = Math.atan2(dx, dz) - adm.rotation.y; ang = Math.atan2(Math.sin(ang), Math.cos(ang));
 const sees = d < (hidden ? 9 : 42) && (Math.abs(ang) < 0.87 || d < 5) && los(a.x, a.z, P.x, P.z);
-if (sees) { if (A.mode !== 'chase') { beep(220, 0.35, 'sawtooth', 0.12); toast('O Almirante viu você! Corra!'); } A.mode = 'chase'; A.lx = P.x; A.lz = P.z; A.t = 0; }
+if (sees) { if (A.mode !== 'chase') { spots++; beep(220, 0.35, 'sawtooth', 0.12); toast('O Almirante viu você! Corra!'); } A.mode = 'chase'; A.lx = P.x; A.lz = P.z; A.t = 0; }
 else if (A.mode === 'chase') { A.t += dt; if (Math.hypot(A.lx - a.x, A.lz - a.z) < 1.5 || A.t > 7) { A.mode = 'search'; A.t = 0; } }
 else if (A.mode === 'search') { A.t += dt; adm.rotation.y += dt * 1.6; if (A.t > 3.5) { A.mode = 'patrol'; let b = 0; WP.forEach((w, i) => { if (Math.hypot(w[0] - a.x, w[1] - a.z) < Math.hypot(WP[b][0] - a.x, WP[b][1] - a.z)) b = i; }); A.wp = b; } }
 let tx, tz, sp; if (A.mode === 'chase') { tx = A.lx; tz = A.lz; sp = 7.4; } else if (A.mode === 'patrol') { const w = WP[A.wp]; if (Math.hypot(w[0] - a.x, w[1] - a.z) < 2) A.wp = (A.wp + 1) % WP.length; tx = WP[A.wp][0]; tz = WP[A.wp][1]; sp = 2.6 + (SURV - survive) * 0.012; } else sp = 0;
 let asp = 0; if (sp) { let ex = tx - a.x, ez = tz - a.z; const el = Math.hypot(ex, ez) || 1; ex /= el; ez /= el; if (A.sideT > 0) { A.sideT -= dt; const s = A.side; [ex, ez] = [-ez * s, ex * s]; }
-const bx = a.x, bz = a.z; tryMove(adm, ex * sp * dt, ez * sp * dt, 0.6); const moved = Math.hypot(a.x - bx, a.z - bz); asp = moved / dt;
+const bx = a.x, bz = a.z; tryMove(adm, ex * sp * dt, ez * sp * dt, 1.0); const moved = Math.hypot(a.x - bx, a.z - bz); asp = moved / dt;
 if (moved < sp * dt * 0.35) { A.stuck += dt; if (A.stuck > 0.25) { A.stuck = 0; A.side = Math.random() < 0.5 ? 1 : -1; A.sideT = 0.9; if (A.mode === 'patrol' && Math.random() < 0.3) A.wp = (A.wp + 1) % WP.length; } } else A.stuck = Math.max(0, A.stuck - dt);
 if (A.mode !== 'search' && A.sideT <= 0) { let da = Math.atan2(tx - a.x, tz - a.z) - adm.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); adm.rotation.y += da * Math.min(1, dt * 5); } }
 A.sp += (asp - A.sp) * Math.min(1, dt * 8); animHuman(adm, A.sp, dt); bang.visible = A.mode === 'chase'; cone.material.color.set(A.mode === 'chase' ? 0xff4433 : 0xffe066);
 meter = Math.min(1, d / 90); good = true; survive -= dt;
-if (d < 1.6 && los(a.x, a.z, P.x, P.z)) { beep(160, 0.6, 'square', 0.12); say('Almirante', 'Preso!', 'Cabo! Fora do posto e correndo atrás de pavão? Está preso. Direto para o bailéu.', 'Tentar a missão final de novo', () => { respawn(); startPhase(4); }, 'jail'); }
-else if (survive <= 0) { gainXP(300); beep(660, 0.15); setTimeout(() => beep(880, 0.15), 140); setTimeout(() => beep(1175, 0.4), 280); quest.visible = true; say('Sargento', 'Missão cumprida!', `Todos os pavões recolhidos e o Almirante não viu nada. Bravo Zulu, Cabo! Você terminou no <b>nível ${lvl}</b>.`, 'Jogar de novo', () => { xp = 0; lvl = 1; stamina = 100; respawn(); startPhase(0); }, 'win'); }
+if (d < 2.3 && los(a.x, a.z, P.x, P.z)) { beep(160, 0.6, 'square', 0.12); say('Almirante', 'Preso!', 'Cabo! Fora do posto e correndo atrás de pavão? Está preso. Direto para o bailéu.', 'Tentar a missão final de novo', () => { respawn(); startPhase(4); }, 'jail'); }
+else if (survive <= 0) { gainXP(300); beep(660, 0.15); setTimeout(() => beep(880, 0.15), 140); setTimeout(() => beep(1175, 0.4), 280); quest.visible = true; say('Sargento', 'Missão cumprida!', `${starsFor(4, spots === 0 ? 3 : spots <= 2 ? 2 : 1, null)}Todos os pavões recolhidos e o Almirante não viu nada. Bravo Zulu, Cabo! Você terminou no <b>nível ${lvl}</b>.`, 'Jogar de novo', () => { xp = 0; lvl = 1; stamina = 100; respawn(); startPhase(0); }, 'win'); }
 }
 updOfficer(dt, P); vehiclePush(P); hud();
 } else vel.multiplyScalar(0.8);
-O.bt -= dt; updBirds(dt, P); updTractor(dt, P); pool.material.uniforms.uT.value = T;
-animHuman(cabo, speed, dt); animHuman(sgt, 0, dt); quest.position.y = 2.3 + Math.sin(T * 3) * 0.06;
+O.bt -= dt; updBirds(dt, P); updTractor(dt, P); updFerry(dt); updHug(dt, P); updStars(dt, P); updTroop(dt); updPainters(dt); updAmb(dt); pool.material.uniforms.uT.value = T;
+animHuman(cabo, speed, dt); hugPose(cabo, H.mode === 'hug'); animHuman(sgt, 0, dt); quest.position.y = 2.3 + Math.sin(T * 3) * 0.06;
 const fl = $('fill'); fl.style.width = Math.max(4, meter * 100).toFixed(0) + '%'; fl.style.background = `hsl(${(meter * 125).toFixed(0)} 75% 48%)`;
 const D = 6.2, fx = Math.sin(yaw), fz = Math.cos(yaw), cp = Math.cos(pitch), sp2 = Math.sin(pitch);
 V3.set(P.x - fz * -0.55, Y0 + 1.55, P.z + fx * -0.55); camTgt.lerp(V3, Math.min(1, dt * 12));
