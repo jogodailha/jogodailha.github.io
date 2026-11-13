@@ -455,12 +455,12 @@ const loadModel = n => MODELS[n] || (MODELS[n] = new Promise((res, rej) => gltfL
   for (const c of gl.animations) for (const t of c.tracks) if (/Pelvis\.position$/.test(t.name) && c.name !== 'idle') { const n3 = t.times.length, v = t.values, T1 = t.times[n3 - 1] || 1; for (let k = 0; k < 3; k++) { const d = v[(n3 - 1) * 3 + k] - v[k]; for (let i = 0; i < n3; i++) v[i * 3 + k] -= d * t.times[i] / T1; } }
   res(gl); }, null, rej)));
 const loadTex = n => TEXC[n] || (TEXC[n] = (() => { const t = texL.load(MDIR + 'tex/' + n + '.jpg'); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; })());
-const KIND = { cabo: ['p3', 'p3_body_cabo', 'p3_head_cabo'], ten: ['p3'], ten2: ['p5', 'p5_body_ten', 'p5_head_gold'], cap: ['p3', 'p3_body_cap', 'p3_head_grey_gold'], adm: ['p3', null, 'p3_head_white_gold'],
-  s0: ['p5'], s1: ['p3', 'p3_body_sgt', 'p3_head_stache_black'], s2: ['p5', null, 'p5_head_stache_black'], s3: ['p3', 'p3_body_sgt', 'p3_head_black'], s4: ['p5', null, 'p5_head_grey_black'],
-  mar0: ['marinheiro'], mar1: ['marinheiro', null, 'mar_head_b'], al0: ['aluno'], al1: ['aluno', null, 'aluno_head_brown'], al2: ['aluno', null, 'aluno_head_black'], al3: ['aluno', null, 'aluno_head_red'],
-  ala0: ['aluna'], ala1: ['aluna', null, 'aluna_head_brown'], ala2: ['aluna', null, 'aluna_head_black'], ty0: ['aluno', 'aluno_body_yellow'], ty1: ['aluno', 'aluno_body_yellow', 'aluno_head_black'], tb0: ['aluno', 'aluno_body_blue', 'aluno_head_brown'], tb1: ['aluno', 'aluno_body_blue', 'aluno_head_red'], ref: ['aluno', 'aluno_body_ref', 'aluno_head_ref'] };
+const KIND = { cabo: ['p3', 'p3_body_cabo', 'p3_head_cabo'], ten: ['p3'], ten2: ['p5', 'p5_body_ten', 'p5_head_gold'], cap: ['p5', 'p5_body_cap', 'p5_head_cap'], ten2: ['b7'], adm: ['p3', null, 'p3_head_white_gold'],
+  s0: ['p5'], s1: ['p3', 'p3_body_sgt', 'p3_head_stache_black'], s2: ['p5', 'p5_body_sub', 'p5_head_stache_black'], s3: ['p3', 'p3_body_sgt', 'p3_head_black'], s4: ['p5', null, 'p5_head_grey_black'],
+  mar0: ['marinheiro'], mar1: ['marinheiro', null, 'mar_head_b'], al0: ['aluno'], al1: ['aluno', null, 'aluno_head_brown'], al2: ['aluno', null, 'aluno_head_black'], al3: ['aluno', null, 'aluno_head_bald'],
+  ala0: ['aluna'], ala1: ['aluna', null, 'aluna_head_brown'], ala2: ['aluna', null, 'aluna_head_black'], ty0: ['sp2'], ty1: ['sp2', null, 'sp2_head_dark'], tb0: ['sp2', 'sp2_body_blue'], tb1: ['sp2', 'sp2_body_blue', 'sp2_head_dark'], ref: ['sp2', 'sp2_body_ref', 'sp2_head_ref'] };
 const HK = { s: 0, m: 0, a: 0, y: 0, b: 0 };
-function kindOf(o) { if (o.k) return o.k; if (o.boards === true) return 'adm'; if (o.gut) return 'ten'; if (o.boards) return 's' + (HK.s++ % 4); if (o.collar) return 'mar' + (HK.m++ % 2);
+function kindOf(o) { if (o.k) return o.k; if (o.boards === true) return 'adm'; if (o.gut) return 'ten2'; if (o.boards) return 's' + (HK.s++ % 4); if (o.collar) return 'mar' + (HK.m++ % 2);
   if (o.uniform === 0xf2c230) return 'ty' + (HK.y++ % 2); if (o.uniform === 0x2a62c9) return 'tb' + (HK.b++ % 2); if (o.uniform === 0x16161a) return 'ref'; return ['al0', 'ala0', 'al1', 'al2', 'ala1', 'al3', 'ala2'][HK.a++ % 7]; }
 const LIMBS = ['shL', 'shR', 'elL', 'elR', 'thL', 'thR', 'knL', 'knR'], DOWN = new THREE.Vector3(0, -1, 0), bname = s => ('Bip01 ' + s).replace(/ /g, '_');
 function human(o) {
@@ -469,6 +469,11 @@ function human(o) {
   u.hips = mk(0, 0.95, 0); u.spine = mk(0, 0.99, 0); u.head = mk(0, 1.71, 0.01); u.shL = mk(-0.21, 1.43, 0, -0.09); u.shR = mk(0.21, 1.43, 0, 0.09); u.elL = mk(-0.23, 1.15, 0); u.elR = mk(0.23, 1.15, 0); u.thL = mk(-0.09, 0.92, 0); u.thR = mk(0.09, 0.92, 0); u.knL = mk(-0.09, 0.5, 0); u.knR = mk(0.09, 0.5, 0);
   const K = KIND[u.kind] || KIND.al0;
   loadModel(K[0]).then(gl => { const m = skClone(gl.scene); g.add(m);
+    if (u.kind === 'ten2') m.traverse(q => { if (!q.isSkinnedMesh) return; const ge = q.geometry = q.geometry.clone(), pa = ge.attributes.position, na = ge.attributes.normal, v = new THREE.Vector3(), n2 = new THREE.Vector3();
+      for (let i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i); n2.set(na.getX(i), 0, na.getZ(i)); const hl = n2.length(); if (hl < 0.05) continue; n2.multiplyScalar(1 / hl);
+        const w = Math.exp(-Math.pow((v.y - 1.06) / 0.17, 2)) * 0.085 + Math.exp(-Math.pow((v.y - 1.3) / 0.2, 2)) * 0.04;
+        if (w < 0.002 || Math.hypot(v.x, v.z) > 0.33) continue; pa.setXYZ(i, v.x + n2.x * w, v.y - w * 0.25, v.z + n2.z * w); }
+      pa.needsUpdate = true; ge.computeVertexNormals(); });
     m.traverse(q => { if (!q.isMesh) return; q.castShadow = true; q.frustumCulled = false; const nm = q.material.name, tx = /_body$/.test(nm) ? K[1] : /_head$/.test(nm) ? K[2] : null; if (tx) { const key = nm + '|' + tx; if (!MATC[key]) { MATC[key] = q.material.clone(); MATC[key].map = loadTex(tx); } q.material = MATC[key]; } });
     const B = s => m.getObjectByName(bname(s)); u.B = { pel: B('Pelvis'), sp: B('Spine1'), hd: B('Head'), shL: B('R UpperArm'), elL: B('R Forearm'), haL: B('R Hand'), shR: B('L UpperArm'), elR: B('L Forearm'), haR: B('L Hand'), thL: B('R Thigh'), knL: B('R Calf'), ftL: B('R Foot'), thR: B('L Thigh'), knR: B('L Calf'), ftR: B('L Foot') };
     g.updateMatrixWorld(true); const gi = new THREE.Matrix4().copy(g.matrixWorld).invert(), inG = b => new THREE.Matrix4().multiplyMatrices(gi, b.matrixWorld), pos = b => new THREE.Vector3().setFromMatrixPosition(inG(b));
