@@ -458,7 +458,7 @@ const loadTex = n => TEXC[n] || (TEXC[n] = (() => { const t = texL.load(MDIR + '
 const KIND = { cabo: ['p3', 'p3_body_cabo', 'p3_head_cabo'], ten: ['p3'], ten2: ['p5', 'p5_body_ten', 'p5_head_gold'], cap: ['p5', 'p5_body_cap', 'p5_head_cap'], ten2: ['b7'], adm: ['p3', null, 'p3_head_white_gold'],
   s0: ['p5'], s1: ['p3', 'p3_body_sgt', 'p3_head_stache_black'], s2: ['p5', 'p5_body_sub', 'p5_head_stache_black'], s3: ['p3', 'p3_body_sgt', 'p3_head_black'], s4: ['p5', null, 'p5_head_grey_black'],
   mar0: ['marinheiro'], mar1: ['marinheiro', null, 'mar_head_b'], al0: ['aluno'], al1: ['aluno', null, 'aluno_head_brown'], al2: ['aluno', null, 'aluno_head_black'], al3: ['aluno', null, 'aluno_head_bald'],
-  ala0: ['aluna'], ala1: ['aluna', null, 'aluna_head_brown'], ala2: ['aluna', null, 'aluna_head_black'], ty0: ['sp2'], ty1: ['sp2', null, 'sp2_head_dark'], tb0: ['sp2', 'sp2_body_blue'], tb1: ['sp2', 'sp2_body_blue', 'sp2_head_dark'], ref: ['sp2', 'sp2_body_ref', 'sp2_head_ref'] };
+  ala0: ['aluna'], ala1: ['aluna', null, 'aluna_head_brown'], ala2: ['aluna', null, 'aluna_head_black'], ty0: ['sp2', 'sp2_body_yellow'], ty1: ['sp2', 'sp2_body_yellow', 'sp2_head_dark'], tb0: ['sp2', 'sp2_body_blue'], tb1: ['sp2', 'sp2_body_blue', 'sp2_head_dark'], ref: ['sp2', 'sp2_body_ref', 'sp2_head_ref'] };
 const HK = { s: 0, m: 0, a: 0, y: 0, b: 0 };
 function kindOf(o) { if (o.k) return o.k; if (o.boards === true) return 'adm'; if (o.gut) return 'ten2'; if (o.boards) return 's' + (HK.s++ % 4); if (o.collar) return 'mar' + (HK.m++ % 2);
   if (o.uniform === 0xf2c230) return 'ty' + (HK.y++ % 2); if (o.uniform === 0x2a62c9) return 'tb' + (HK.b++ % 2); if (o.uniform === 0x16161a) return 'ref'; return ['al0', 'ala0', 'al1', 'al2', 'ala1', 'al3', 'ala2'][HK.a++ % 7]; }
