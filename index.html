@@ -8,7 +8,13 @@
 html,body{height:100%;margin:0;background:var(--navy);overflow:hidden;font-family:var(--body);color:var(--paper);touch-action:none;user-select:none;-webkit-user-select:none}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .panel{position:fixed;background:rgba(13,34,71,.8);border:1px solid rgba(243,207,122,.55);border-radius:10px;padding:10px 14px;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.35)}
-#char{left:16px;top:14px;width:min(240px,50vw)}
+#tl{position:fixed;left:16px;top:14px;width:min(240px,50vw);display:flex;flex-direction:column;align-items:stretch;gap:8px;pointer-events:none}
+#tl .panel{position:static;width:auto}
+#onl{display:none;align-items:center;gap:9px;padding:8px 12px;font:800 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+#onl.on{display:flex}
+#onl i{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 9px var(--good);flex:none;animation:plsq 2s ease-in-out infinite}
+#onl b{font-size:15px;color:var(--paper);font-variant-numeric:tabular-nums}
+@keyframes plsq{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
 .rank{margin:4px 0 6px}.rank h2{font:900 20px var(--display);color:var(--gold);margin:0 0 8px;letter-spacing:.06em}
 #rk{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}#rk td{padding:6px 10px;border-bottom:1px solid rgba(243,207,122,.25);font-weight:700}#rk td:first-child{width:44px;color:var(--gold)}#rk td:last-child{text-align:right;white-space:nowrap}#rk tr.hi td{background:rgba(243,207,122,.22)}
 .me{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.me input{flex:1;min-width:140px;font:700 16px var(--body);padding:10px 12px;border-radius:8px;border:2px solid var(--gold);background:#fff;color:var(--ink)}.me input:focus-visible{outline:3px solid #fff;outline-offset:2px}.me b{color:var(--gold);white-space:nowrap}.me button{font:800 14px var(--body);background:var(--good);color:#06210f;border:0;border-radius:8px;padding:11px 18px;cursor:pointer}.me button:disabled,.me input:disabled{opacity:.55;cursor:default}#rkmsg{min-height:20px;margin-top:8px;font-size:14px;font-weight:700;color:var(--gold)}
@@ -51,7 +57,8 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 @media (max-width:560px){#meter{left:16px;transform:none;bottom:16px;width:38vw}#qgoal{font-size:13px}}
 </style></head><body>
 <canvas id="c"></canvas>
-<div class="panel" id="char"><div class="nm">Cabo Velho <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div></div><div class="row"><span>Pontos</span><b id="pts" style="font-size:13px;letter-spacing:.04em">0</b></div><div id="buffs"></div></div>
+<div id="tl"><div class="panel" id="char"><div class="nm">Cabo Velho <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div></div><div class="row"><span>Pontos</span><b id="pts" style="font-size:13px;letter-spacing:.04em">0</b></div><div id="buffs"></div></div>
+<div class="panel" id="onl"><i></i><span><b id="onln">1</b> <span id="onlt">jogando agora</span></span></div></div>
 <div class="panel" id="questp"><div id="qname">Missão 1 de 5</div><div id="qgoal">Recolher os pavões: 0 de 5</div></div>
 <div class="panel" id="mapp"><canvas id="map"></canvas></div>
 <div id="meter"><div id="meterLabel">Sinal de pavão</div><div id="bar"><div id="fill"></div></div></div>
@@ -941,6 +948,23 @@ function rankInit() { const inp = $('pname'), btn = $('psave'), msg = $('rkmsg')
     const ok = await salvarPontuacao(nome, mine), l = await carregarRanking(); if (!$('rk')) return; const me = { nome, pontos: mine }, i = l.findIndex(e => e.nome === nome && e.pontos === mine); rankDraw(l, me);
     msg.textContent = (i >= 0 ? `Enviado! Você está em ${i + 1}º lugar.` : 'Enviado! Sua pontuação ainda não entrou no Top 10.') + (ok ? '' : ' (Gravado só neste aparelho: ranking online indisponível.)'); beep(880, 0.15, 'triangle'); }; }
 window.__lb = { salvarPontuacao, carregarRanking, LB, FB, end: () => survive = 0.01, setScore: v => score = v, get score() { return score; } };
+
+// ---------- contador de quem esta jogando agora (presenca no Firestore) ----------
+const PRES = { n: 1, on: false, viva: 60000, id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) };
+function presDraw() { const e = $('onl'); if (!e) return; if (!PRES.on) { e.classList.remove('on'); return; }
+  $('onln').textContent = PRES.n; $('onlt').textContent = PRES.n === 1 ? 'jogando agora' : 'jogando agora'; e.classList.add('on'); }
+async function presIniciar() { const fb = await FB; if (!fb || !fb.doc || !fb.onSnapshot) return;
+  const ref = fb.doc(fb.db, 'online', PRES.id), bater = () => fb.setDoc(ref, { t: fb.serverTimestamp() }).catch(() => {});
+  await bater(); setInterval(bater, 25000);
+  fb.onSnapshot(fb.collection(fb.db, 'online'), snap => { const agora = Date.now(), velhos = []; let n = 0;
+    snap.forEach(d => { const t = (d.data() || {}).t, ms = t && t.toMillis ? t.toMillis() : 0, dt = agora - ms;
+      if (ms && dt < PRES.viva) n++; else if (ms && dt > 6e5 && d.id !== PRES.id) velhos.push(d.ref); });
+    PRES.n = Math.max(1, n); PRES.on = true; presDraw();
+    velhos.slice(0, 5).forEach(r => fb.deleteDoc(r).catch(() => {})); }, () => { PRES.on = false; presDraw(); });
+  const sair = () => { try { fb.deleteDoc(ref); } catch (e) {} };
+  addEventListener('pagehide', sair); addEventListener('beforeunload', sair); }
+presIniciar();
+window.__pres = { PRES, presDraw, mostrar: n => { PRES.n = n; PRES.on = true; presDraw(); } };
 
 // ================= EXTRAS 8: Honras de Portaló (lancha do Almirante no cais) =================
 // cais: box(7,1,46) em (-48, 2.6, 106) -> corre no eixo z, de z=83 (terra) a z=129 (mar)
