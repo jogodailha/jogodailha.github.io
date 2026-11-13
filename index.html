@@ -945,15 +945,15 @@ const PIER = { x: -48, zForm: 107, zStop: 114.5, zEnd: 95, dock: [-42, 112] }, P
 const SLOTS = [[-1.75, 3.8], [-1.75, 0], [-1.75, -3.8], [1.75, 3.8], [1.75, 0], [1.75, -3.8]].map(([dx, dz]) => [PIER.x + dx, PIER.zForm + dz]);
 const PT = { on: false, boys: [], got: 0, tr: [], st: 'idle', t: 0, wt: 0, shout: 0, done: 0 };
 
-// ---- toque de apito oficial (audio/apito.mp3, trecho do primeiro toque de presença) ----
-const APITO = { raw: null, buf: null, dec: 0, el: null, t0: 1.25, dur: 8.1 };
+// ---- toque de apito oficial da Marinha (audio/apito.mp3, gravação completa) ----
+const APITO = { raw: null, buf: null, dec: 0, el: null, dur: 31.5 };
 fetch('audio/apito.mp3').then(r => r.ok ? r.arrayBuffer() : null).then(b => { APITO.raw = b; }).catch(() => { });
 function apitoPrep() { if (audio && APITO.raw && !APITO.buf && !APITO.dec) { APITO.dec = 1; audio.decodeAudioData(APITO.raw.slice(0), b => { APITO.buf = b; }, () => { APITO.dec = 0; }); } }
 function apito() {
   apitoPrep();
-  if (audio && APITO.buf) { const s = audio.createBufferSource(), g = audio.createGain(); s.buffer = APITO.buf; g.gain.value = 1; s.connect(g); g.connect(audio.destination); s.start(0, APITO.t0, APITO.dur); return APITO.dur + 0.5; }
-  try { const el = APITO.el || (APITO.el = new Audio('audio/apito.mp3')); el.currentTime = APITO.t0; const p = el.play(); if (p && p.catch) p.catch(() => { }); setTimeout(() => { try { el.pause(); } catch (e) { } }, APITO.dur * 1000); } catch (e) { }
-  return APITO.dur + 0.5;
+  if (audio && APITO.buf) { const s = audio.createBufferSource(), g = audio.createGain(); s.buffer = APITO.buf; g.gain.value = 1; s.connect(g); g.connect(audio.destination); s.start(); return APITO.buf.duration + 0.3; }
+  try { const el = APITO.el || (APITO.el = new Audio('audio/apito.mp3')); el.currentTime = 0; const p = el.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }
+  return APITO.dur + 0.3;
 }
 
 // ---- lancha do Almirante (estilo Azimut 40) ----
