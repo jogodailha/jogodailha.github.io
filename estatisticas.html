@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estatísticas · Pavões na Ilha das Enxadas</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0d1b2e;--card:#14263f;--line:#24405f;--txt:#eef3f8;--mut:#9fb3c8;--gold:#f3cf7a;--a:#4fa3ff;--b:#f3cf7a;--ok:#3fc46a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 2px;color:var(--gold)}h2{font-size:15px;margin:0 0 10px;color:var(--gold);text-transform:uppercase;letter-spacing:.05em}
+.sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.card b{display:block;font-size:28px;line-height:1.1}.card span{color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:720px){.grid{grid-template-columns:1fr}}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.tabs button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:6px 14px;cursor:pointer}.tabs button.on{background:var(--gold);color:#1b1b1b;border-color:var(--gold);font-weight:700}
+.row{display:grid;grid-template-columns:minmax(90px,38%) 1fr 54px;align-items:center;gap:8px;margin:5px 0;font-size:14px}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar{height:12px;background:#0b1626;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--a);border-radius:6px}
+.row .v{text-align:right;font-variant-numeric:tabular-nums}.mar i{background:var(--ok)}
+.chart{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:6px;border-bottom:1px solid var(--line)}
+.chart .c{flex:1;display:flex;gap:1px;align-items:flex-end;height:100%;min-width:0}.chart .c i{flex:1;background:var(--a);border-radius:3px 3px 0 0;min-height:1px}.chart .c i+i{background:var(--b)}
+.axis{display:flex;gap:3px;font-size:10px;color:var(--mut);margin-top:3px}.axis span{flex:1;text-align:center;min-width:0;overflow:hidden}
+.leg{font-size:12px;color:var(--mut);margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:600}
+.note{color:var(--mut);font-size:12px;margin-top:8px}.err{color:#ff8a7a}
+</style></head><body><main>
+<h1>Estatísticas do jogo</h1>
+<div class="sub">Pavões na Ilha das Enxadas · <span id="upd">carregando…</span></div>
+<div class="cards">
+  <div class="card"><b id="cAcHoje">–</b><span>acessos hoje</span></div>
+  <div class="card"><b id="cApHoje">–</b><span>aparelhos hoje</span></div>
+  <div class="card"><b id="cOn">–</b><span>jogando agora</span></div>
+  <div class="card"><b id="cMinHoje">–</b><span>minutos jogados hoje</span></div>
+</div>
+<section><h2>Acessos por dia (últimos 30 dias)</h2><div class="chart" id="chDia"></div><div class="axis" id="axDia"></div>
+  <div class="leg"><i style="background:var(--a)"></i>acessos (cada abertura) <i style="background:var(--b)"></i>aparelhos diferentes</div></section>
+<div class="tabs" id="tabs"><button data-p="1">Hoje</button><button data-p="7" class="on">7 dias</button><button data-p="30">30 dias</button><button data-p="0">Tudo</button></div>
+<div class="cards">
+  <div class="card"><b id="pAc">–</b><span>acessos no período</span></div>
+  <div class="card"><b id="pAp">–</b><span>aparelhos no período (soma dos dias)</span></div>
+  <div class="card"><b id="pMin">–</b><span>minutos jogados</span></div>
+  <div class="card"><b id="pMed">–</b><span>média de minutos por acesso</span></div>
+</div>
+<div class="grid">
+  <section><h2>Onde estão (cidade aproximada)</h2><div id="lCid"></div><div class="note">Pela conexão de internet, sem pedir nada ao jogador. Com dados do celular a cidade pode sair a da operadora.</div></section>
+  <section><h2>Rede de internet</h2><div id="lRede"></div><div class="note">Em verde, redes da Marinha (provável acesso de dentro de uma OM, como o CIAW).</div></section>
+  <section><h2>Até onde chegaram</h2><div id="lMiss"></div><div class="note">Quantos acessos começaram cada missão. A porcentagem é sobre quem começou a Missão 1.</div></section>
+  <section><h2>Quanto tempo jogaram</h2><div id="lDur"></div><div class="note">Acessos que ficaram com o jogo aberto por pelo menos esse tempo.</div></section>
+  <section><h2>Tipo de aparelho</h2><div id="lDev"></div></section>
+  <section><h2>Sistema</h2><div id="lSo"></div></section>
+</div>
+<section><h2>Horário dos acessos</h2><div class="chart" id="chHora"></div><div class="axis" id="axHora"></div></section>
+<section><h2>Dia a dia</h2><div style="overflow-x:auto"><table id="tb"><thead><tr><th>Dia</th><th>Acessos</th><th>Aparelhos</th><th>Minutos</th><th>Terminaram o jogo</th></tr></thead><tbody></tbody></table></div>
+  <div class="note">"Acessos" começou a ser contado em <span id="ini">–</span>; antes disso só existe o número de aparelhos.</div></section>
+<div class="note" id="msg"></div>
+</main>
+<script type="module">
+const V = '10.12.2', base = `https://www.gstatic.com/firebasejs/${V}/`;
+const [{ initializeApp }, fs] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
+const db = fs.getFirestore(initializeApp({ projectId: 'jogodailhaplacar', authDomain: 'jogodailhaplacar.firebaseapp.com' }));
+const $ = id => document.getElementById(id), fmt = n => Number(n || 0).toLocaleString('pt-BR');
+const MISS = [['m1', '1 · Honras de portaló'], ['m2', '2 · Incêndio na Ilha'], ['m3', '3 · Pavões à solta'], ['m4', '4 · Faxina na ilha'], ['m5', '5 · Reforma da pista'], ['m6', '6 · Goleiro da pelada'], ['m7', '7 · Ronda do Almirante'], ['fim', 'Terminaram o jogo']];
+const DUR = [['1', '1 minuto ou mais'], ['5', '5 minutos ou mais'], ['10', '10 minutos ou mais'], ['20', '20 minutos ou mais'], ['30', '30 minutos ou mais']];
+const hoje = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+const dBR = s => s.slice(8, 10) + '/' + s.slice(5, 7);
+let EST = {}, VIS = {}, per = 7;
+function lista(el, obj, opt = {}) { const it = Object.entries(obj || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, opt.max || 12), mx = Math.max(1, ...it.map(x => x[1]));
+  $(el).innerHTML = it.length ? it.map(([k, v]) => `<div class="row ${opt.mar && /marinha/i.test(k) ? 'mar' : ''}"><span class="nm" title="${esc(k)}">${esc(k)}</span><span class="bar"><i style="width:${(100 * v / mx).toFixed(1)}%"></i></span><span class="v">${fmt(v)}</span></div>`).join('') : '<div class="note">Sem dados no período.</div>'; }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function somar(dias) { const r = { acessos: 0, ap: 0, tempo: 0, dev: {}, so: {}, hora: {}, cid: {}, rede: {}, miss: {}, dur: {} };
+  for (const d of dias) { const e = EST[d] || {}; r.acessos += e.acessos || 0; r.tempo += e.tempo || 0; r.ap += VIS[d] || 0;
+    for (const k of ['dev', 'so', 'hora', 'cid', 'rede', 'miss', 'dur']) for (const [a, v] of Object.entries(e[k] || {})) r[k][a] = (r[k][a] || 0) + v; } return r; }
+function diasDe(n) { const all = [...new Set([...Object.keys(EST), ...Object.keys(VIS)])].sort(); if (!n) return all; const out = [], t = new Date(hoje() + 'T12:00:00'); for (let i = n - 1; i >= 0; i--) { const d = new Date(t); d.setDate(t.getDate() - i); out.push(d.toISOString().slice(0, 10)); } return out; }
+function desenhar() {
+  const h = hoje(), eh = EST[h] || {}; $('cAcHoje').textContent = fmt(eh.acessos); $('cApHoje').textContent = fmt(VIS[h]); $('cMinHoje').textContent = fmt(eh.tempo);
+  // gráfico 30 dias
+  const d30 = diasDe(30), mx = Math.max(1, ...d30.map(d => Math.max((EST[d] || {}).acessos || 0, VIS[d] || 0)));
+  $('chDia').innerHTML = d30.map(d => `<div class="c" title="${dBR(d)}: ${fmt((EST[d] || {}).acessos)} acessos, ${fmt(VIS[d])} aparelhos"><i style="height:${100 * ((EST[d] || {}).acessos || 0) / mx}%"></i><i style="height:${100 * (VIS[d] || 0) / mx}%"></i></div>`).join('');
+  $('axDia').innerHTML = d30.map((d, i) => `<span>${i % 5 === 4 || i === 29 ? dBR(d) : ''}</span>`).join('');
+  // período escolhido
+  const s = somar(diasDe(per)); $('pAc').textContent = fmt(s.acessos); $('pAp').textContent = fmt(s.ap); $('pMin').textContent = fmt(s.tempo); $('pMed').textContent = s.acessos ? (s.tempo / s.acessos).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : '–';
+  lista('lCid', s.cid, { max: 15 }); lista('lRede', s.rede, { mar: true, max: 10 }); lista('lDev', s.dev); lista('lSo', s.so);
+  const m1 = s.miss.m1 || 0; $('lMiss').innerHTML = MISS.map(([k, n]) => { const v = s.miss[k] || 0; return `<div class="row"><span class="nm">${n}</span><span class="bar"><i style="width:${m1 ? (100 * v / m1).toFixed(1) : 0}%"></i></span><span class="v">${fmt(v)}${m1 ? ` <small style="color:var(--mut)">${Math.round(100 * v / m1)}%</small>` : ''}</span></div>`; }).join('');
+  const dm = Math.max(1, ...DUR.map(([k]) => s.dur[k] || 0)); $('lDur').innerHTML = DUR.map(([k, n]) => `<div class="row"><span class="nm">${n}</span><span class="bar"><i style="width:${(100 * (s.dur[k] || 0) / dm).toFixed(1)}%"></i></span><span class="v">${fmt(s.dur[k])}</span></div>`).join('');
+  const hs = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')), hm = Math.max(1, ...hs.map(x => s.hora[x] || 0));
+  $('chHora').innerHTML = hs.map(x => `<div class="c" title="${x}h: ${fmt(s.hora[x])} acessos"><i style="height:${100 * (s.hora[x] || 0) / hm}%"></i></div>`).join(''); $('axHora').innerHTML = hs.map(x => `<span>${+x % 3 === 0 ? x + 'h' : ''}</span>`).join('');
+  // tabela
+  const todos = diasDe(0).reverse(); $('tb').tBodies[0].innerHTML = todos.map(d => { const e = EST[d] || {}; return `<tr><td>${dBR(d)}/${d.slice(0, 4)}</td><td>${e.acessos != null ? fmt(e.acessos) : '–'}</td><td>${VIS[d] != null ? fmt(VIS[d]) : '–'}</td><td>${e.tempo != null ? fmt(e.tempo) : '–'}</td><td>${fmt((e.miss || {}).fim)}</td></tr>`; }).join('');
+  const ini = Object.keys(EST).sort()[0]; $('ini').textContent = ini ? dBR(ini) + '/' + ini.slice(0, 4) : 'a próxima publicação do jogo';
+  $('upd').textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (atualiza sozinho a cada minuto)'; }
+async function carregar() { // cada coleção é lida separada: se uma falhar, as outras aparecem mesmo assim
+  const [a, b, c] = await Promise.allSettled([fs.getDocs(fs.collection(db, 'estat')), fs.getDocs(fs.collection(db, 'visitas')), fs.getDocs(fs.collection(db, 'online'))]), erros = [];
+  if (a.status === 'fulfilled') { EST = {}; a.value.forEach(d => EST[d.id] = d.data()); } else erros.push('acessos e detalhes');
+  if (b.status === 'fulfilled') { VIS = {}; b.value.forEach(d => VIS[d.id] = d.data().n || 0); } else erros.push('aparelhos');
+  if (c.status === 'fulfilled') { const agora = Date.now(); let on = 0; c.value.forEach(d => { const t = d.data().t; if (t && agora - t.toMillis() < 60000) on++; }); $('cOn').textContent = fmt(on); } else erros.push('jogando agora');
+  $('msg').innerHTML = erros.length ? '<span class="err">Não consegui ler agora: ' + erros.join(', ') + '.</span>' : ''; desenhar(); }
+window.__stats = { set: (e, v) => { EST = e; if (v) VIS = v; desenhar(); } };
+$('tabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; per = +b.dataset.p; for (const x of $('tabs').children) x.classList.toggle('on', x === b); desenhar(); };
+await carregar(); setInterval(carregar, 60000);
+</script></body></html>

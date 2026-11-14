@@ -553,7 +553,7 @@ function gainXP(n) { xp += n; while (xp >= xpNeed()) { xp -= xpNeed(); lvl++; st
 function hideSpot() { for (let k = 0; k < 3000; k++) { const x = -225 + Math.random() * 465, z = -90 + Math.random() * 180; if (blocked(x, z, 1.2)) continue; if (Math.hypot(x - cabo.position.x, z - cabo.position.z) < 45) continue; if (peacocks.some(p => Math.hypot(x - p.position.x, z - p.position.z) < 35)) continue;
     const cover = inTrees(x, z) || rects.some(b => inRect(b, x, z, 5)); if (cover || k > 2000) return [x, z]; } return [0, 60]; }
 function startPhase(n) {
-  phase = n; peacocks.forEach(p => scene.remove(p)); peacocks = []; found = 0; adm.visible = false; bang.visible = false; vel.set(0, 0, 0); quest.visible = false;
+  phase = n; estMissao(n); peacocks.forEach(p => scene.remove(p)); peacocks = []; found = 0; adm.visible = false; bang.visible = false; vel.set(0, 0, 0); quest.visible = false;
   if (n < 4) { total = PH[n]; for (let i = 0; i < total; i++) { const p = peacock(), [x, z] = hideSpot(); p.position.set(x, Y0, z); p.rotation.y = Math.random() * 6; p.userData.tx = x; p.userData.tz = z; scene.add(p); peacocks.push(p); } }
   else if (n === 4) { survive = SURV; let far = WP[0]; for (const w of WP) if (Math.hypot(w[0] - cabo.position.x, w[1] - cabo.position.z) > Math.hypot(far[0] - cabo.position.x, far[1] - cabo.position.z)) far = w; adm.position.set(far[0], Y0, far[1]); adm.visible = true; A = { mode: 'patrol', wp: WP.indexOf(far), lx: 0, lz: 0, t: 0, stuck: 0, side: 0, sideT: 0, sp: 0 }; }
   adm.scale.setScalar(n === 4 ? 2 : 1);
@@ -569,7 +569,7 @@ function hud() {
 }
 function say(who, title, text, btn, fn, cls = '') { state = 'pause'; $('dlg').className = cls; $('who').textContent = who; $('ctitle').textContent = title; $('ctext').innerHTML = text; $('cbtn').textContent = btn; $('overlay').style.display = 'flex'; $('cbtn').onclick = () => { $('overlay').style.display = 'none'; if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } fn(); }; $('cbtn').focus(); }
 const respawn = () => { cabo.position.set(SPAWN[0], Y0, SPAWN[1]); };
-const intro = () => say('Sargento', 'Honras de portaló', 'Cabo Velho, o <b>Contra-Almirante</b> chega de lancha ao cais daqui a pouco. Manda a tradição: <b>seis boys</b> perfilados em duas filas de três no portaló para receber a autoridade.<br><br>Há <b>10 marinheiros</b> espalhados pela ilha. Encoste em seis deles — eles entram na fila atrás de você — e leve todos até a marca do portaló, no cais, <b>antes de a lancha atracar</b>. O Mestre da Ilha e o Oficial de Serviço já estão lá esperando.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.' + obj(5), 'Aceitar missão', () => { score = 0; respawn(); startPhase(5); });
+const intro = () => say('Sargento', 'Honras de portaló', 'Cabo Velho, o <b>Contra-Almirante</b> chega de lancha ao cais daqui a pouco. Manda a tradição: <b>seis boys</b> perfilados em duas filas de três no portaló para receber a autoridade.<br><br>Há <b>10 marinheiros</b> espalhados pela ilha. Encoste em seis deles — eles entram na fila atrás de você — e leve todos até a marca do portaló, no cais, <b>antes de a lancha atracar</b>. O Mestre da Ilha e o Oficial de Serviço já estão lá esperando.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.' + obj(5) + '<p style="font-size:12px;opacity:.7;margin:10px 0 0">O jogo guarda estatísticas anônimas (aparelho, horário, cidade aproximada e progresso), sem nome nem dado pessoal.</p>', 'Aceitar missão', () => { score = 0; respawn(); startPhase(5); });
 
 function nextPhase(stOverride) {
   const s = slotOf(phase), n = ORDER[s + 1], st0 = stOverride || (ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1), sr = starsFor(phase, st0, ptime); score += 1000 + st0 * 500 + Math.max(0, Math.round((300 - ptime) * 2)); hud(); gainXP(60 + slotOf(phase) * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
@@ -978,6 +978,32 @@ async function registrarVisita() { const dia = diaBR(), chave = 'pavoes_visita_'
     try { localStorage.setItem(chave, '1'); } catch (e) {} return 'ok ' + dia; } catch (e) { return 'falhou: ' + (e && e.message || e); } }
 registrarVisita();
 window.__vis = { registrarVisita, diaBR };
+
+// ---------- estatísticas anônimas por dia (coleção estat/AAAA-MM-DD) ----------
+// Cada abertura do jogo conta 1 acesso. Guarda só contagens: tipo de aparelho, sistema, hora,
+// cidade aproximada e rede (pela conexão, sem pedir nada ao jogador), missões alcançadas e minutos jogados.
+// Nenhum nome, endereço de internet ou posição exata é gravado. Em localhost nada é gravado (só mostrado em __est).
+const EST = { local: /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname), log: [], miss: new Set(), min: 0 };
+const horaBR = () => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hourCycle: 'h23' }).format(new Date()).slice(0, 2);
+function estDisp() { const ua = navigator.userAgent, touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+  const so = /Android/.test(ua) ? 'Android' : /iPhone|iPad|iPod/.test(ua) || touchMac ? 'iPhone/iPad' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /CrOS/.test(ua) ? 'Chromebook' : /Linux/.test(ua) ? 'Linux' : 'Outro';
+  const dev = /iPad|Tablet/.test(ua) || touchMac || (/Android/.test(ua) && !/Mobile/.test(ua)) ? 'Tablet' : /Mobi|iPhone|Android/.test(ua) ? 'Celular' : 'Computador'; return { so, dev }; }
+const estLimpa = s => String(s || '').replace(/^AS\d+\s+/i, '').replace(/[.\/#$\[\]~*]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+async function estGeo() { try { const r = await lbWait(fetch('https://get.geojs.io/v1/ip/geo.json').then(x => x.json()), 4000);
+    const cid = r.country_code === 'BR' ? [r.city, r.region].filter(Boolean).join(' - ') : [r.city, r.country].filter(Boolean).join(' - ');
+    return { cid: estLimpa(cid) || 'Não identificada', rede: estLimpa(r.organization_name) || 'Não identificada' }; } catch (e) { return { cid: 'Não identificada', rede: 'Não identificada' }; } }
+async function estGravar(dados) { EST.log.push(dados); if (EST.local) return 'localhost: não gravado';
+  const fb = await FB; if (!fb || !fb.setDoc || !fb.increment) return 'sem firebase';
+  try { await lbWait(fb.setDoc(fb.doc(fb.db, 'estat', diaBR()), dados, { merge: true })); return 'ok'; } catch (e) { return 'falhou: ' + (e && e.message || e); } }
+async function estAcesso() { const { so, dev } = estDisp(), g = await estGeo(), inc = () => FB_INC(1);
+  return estGravar({ acessos: inc(), dev: { [dev]: inc() }, so: { [so]: inc() }, hora: { [horaBR()]: inc() }, cid: { [g.cid]: inc() }, rede: { [g.rede]: inc() } }); }
+// increment só existe depois do Firebase carregar; em localhost guarda um marcador legível
+let FB_INC = n => ({ inc: n }); FB.then(fb => { if (fb && fb.increment && !EST.local) FB_INC = n => fb.increment(n); });
+function estMissao(n) { const k = n === 'fim' ? 'fim' : 'm' + (slotOf(n) + 1); if (EST.miss.has(k)) return; EST.miss.add(k); FB.then(() => estGravar({ miss: { [k]: FB_INC(1) } })); }
+// minutos jogados: a cada minuto com o jogo aberto e visível; marca também 1, 5, 10, 20 e 30 minutos na mesma sessão
+setInterval(() => { if (document.visibilityState !== 'visible') return; EST.min++; const d = { tempo: FB_INC(1) }; if ([1, 5, 10, 20, 30].includes(EST.min)) d.dur = { [String(EST.min)]: FB_INC(1) }; estGravar(d); }, 60000);
+FB.then(() => estAcesso());
+window.__est = EST;
 
 // ================= EXTRAS 8: Honras de Portaló (lancha do Almirante no cais) =================
 // cais: box(7,1,46) em (-48, 2.6, 106) -> corre no eixo z, de z=83 (terra) a z=129 (mar)
@@ -1526,7 +1552,7 @@ function step(dt) {
       A.sp += (asp - A.sp) * Math.min(1, dt * 8); animHuman(adm, A.sp, dt); bang.visible = A.mode === 'chase'; cone.material.color.set(A.mode === 'chase' ? 0xff4433 : 0xffe066);
       meter = Math.min(1, d / 90); good = true; survive -= dt;
       if (d < 2.3 && los(a.x, a.z, P.x, P.z)) { beep(160, 0.6, 'square', 0.12); say('Almirante', 'Preso!', 'Cabo! Fora do posto e correndo atrás de pavão? Está preso. Direto para o bailéu.' + obj(4), 'Tentar a missão final de novo', () => { respawn(); startPhase(4); }, 'jail'); }
-      else if (survive <= 0) { score += 1000 + (spots === 0 ? 3 : spots <= 2 ? 2 : 1) * 500; gainXP(300); beep(660, 0.15); setTimeout(() => beep(880, 0.15), 140); setTimeout(() => beep(1175, 0.4), 280); quest.visible = true; say('Sargento', 'Missão cumprida!', `${starsFor(4, spots === 0 ? 3 : spots <= 2 ? 2 : 1, null)}Todos os pavões recolhidos e o Almirante não viu nada. Bravo Zulu, Cabo! Você terminou no <b>nível ${lvl}</b> com <b>${score} pontos</b>.${rankHTML()}${obj(0)}`, 'Jogar de novo', () => { xp = 0; lvl = 1; stamina = 100; score = 0; respawn(); startPhase(5); }, 'win'); rankInit(); }
+      else if (survive <= 0) { estMissao('fim'); score += 1000 + (spots === 0 ? 3 : spots <= 2 ? 2 : 1) * 500; gainXP(300); beep(660, 0.15); setTimeout(() => beep(880, 0.15), 140); setTimeout(() => beep(1175, 0.4), 280); quest.visible = true; say('Sargento', 'Missão cumprida!', `${starsFor(4, spots === 0 ? 3 : spots <= 2 ? 2 : 1, null)}Todos os pavões recolhidos e o Almirante não viu nada. Bravo Zulu, Cabo! Você terminou no <b>nível ${lvl}</b> com <b>${score} pontos</b>.${rankHTML()}${obj(0)}`, 'Jogar de novo', () => { xp = 0; lvl = 1; stamina = 100; score = 0; respawn(); startPhase(5); }, 'win'); rankInit(); }
     }
     updOfficer(dt, P); vehiclePush(P); hud();
   } else vel.multiplyScalar(0.8);
