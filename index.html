@@ -966,6 +966,16 @@ async function presIniciar() { const fb = await FB; if (!fb || !fb.doc || !fb.on
 presIniciar();
 window.__pres = { PRES, presDraw, mostrar: n => { PRES.n = n; PRES.on = true; presDraw(); } };
 
+// ---------- registro de acessos por dia (1 por aparelho por dia, sem identificar ninguem) ----------
+const diaBR = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+async function registrarVisita() { const dia = diaBR(), chave = 'pavoes_visita_' + dia;
+  try { if (localStorage.getItem(chave)) return 'ja contado hoje'; } catch (e) {}
+  const fb = await FB; if (!fb || !fb.setDoc || !fb.increment) return 'sem firebase';
+  try { await lbWait(fb.setDoc(fb.doc(fb.db, 'visitas', dia), { n: fb.increment(1) }, { merge: true }));
+    try { localStorage.setItem(chave, '1'); } catch (e) {} return 'ok ' + dia; } catch (e) { return 'falhou: ' + (e && e.message || e); } }
+registrarVisita();
+window.__vis = { registrarVisita, diaBR };
+
 // ================= EXTRAS 8: Honras de Portaló (lancha do Almirante no cais) =================
 // cais: box(7,1,46) em (-48, 2.6, 106) -> corre no eixo z, de z=83 (terra) a z=129 (mar)
 const PIER = { x: -48, zForm: 107, zStop: 114.5, zEnd: 95, dock: [-42, 112] }, PTDUR = 180;
