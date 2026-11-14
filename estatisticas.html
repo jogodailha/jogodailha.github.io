@@ -50,8 +50,8 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;
   <section><h2>Sistema</h2><div id="lSo"></div></section>
 </div>
 <section><h2>Horário dos acessos</h2><div class="chart" id="chHora"></div><div class="axis" id="axHora"></div></section>
-<section><h2>Dia a dia</h2><div style="overflow-x:auto"><table id="tb"><thead><tr><th>Dia</th><th>Acessos</th><th>Aparelhos</th><th>Minutos</th><th>Terminaram o jogo</th></tr></thead><tbody></tbody></table></div>
-  <div class="note">"Acessos" começou a ser contado em <span id="ini">–</span>; antes disso só existe o número de aparelhos.</div></section>
+<section><h2>Dia a dia</h2><div style="overflow-x:auto"><table id="tb"><thead><tr><th>Dia</th><th>Acessos</th><th>Aparelhos</th><th>Minutos</th><th>Terminaram o jogo</th><th>Enviaram ao ranking</th></tr></thead><tbody></tbody></table></div>
+  <div class="note">Tudo o que existe gravado, desde o primeiro dia. "Acessos", "Minutos" e "Terminaram o jogo" começaram a ser contados em <span id="ini">–</span>; "Aparelhos" desde 13/11/2026; "Enviaram ao ranking" desde o lançamento do ranking (11/11/2026). Antes disso nada foi gravado.</div></section>
 <div class="note" id="msg"></div>
 </main>
 <script type="module">
@@ -63,14 +63,14 @@ const MISS = [['m1', '1 · Honras de portaló'], ['m2', '2 · Incêndio na Ilha'
 const DUR = [['1', '1 minuto ou mais'], ['5', '5 minutos ou mais'], ['10', '10 minutos ou mais'], ['20', '20 minutos ou mais'], ['30', '30 minutos ou mais']];
 const hoje = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 const dBR = s => s.slice(8, 10) + '/' + s.slice(5, 7);
-let EST = {}, VIS = {}, per = 7;
+let EST = {}, VIS = {}, RK = {}, per = 7;
 function lista(el, obj, opt = {}) { const it = Object.entries(obj || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, opt.max || 12), mx = Math.max(1, ...it.map(x => x[1]));
   $(el).innerHTML = it.length ? it.map(([k, v]) => `<div class="row ${opt.mar && /marinha/i.test(k) ? 'mar' : ''}"><span class="nm" title="${esc(k)}">${esc(k)}</span><span class="bar"><i style="width:${(100 * v / mx).toFixed(1)}%"></i></span><span class="v">${fmt(v)}</span></div>`).join('') : '<div class="note">Sem dados no período.</div>'; }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function somar(dias) { const r = { acessos: 0, ap: 0, tempo: 0, dev: {}, so: {}, hora: {}, cid: {}, rede: {}, miss: {}, dur: {} };
   for (const d of dias) { const e = EST[d] || {}; r.acessos += e.acessos || 0; r.tempo += e.tempo || 0; r.ap += VIS[d] || 0;
     for (const k of ['dev', 'so', 'hora', 'cid', 'rede', 'miss', 'dur']) for (const [a, v] of Object.entries(e[k] || {})) r[k][a] = (r[k][a] || 0) + v; } return r; }
-function diasDe(n) { const all = [...new Set([...Object.keys(EST), ...Object.keys(VIS)])].sort(); if (!n) return all; const out = [], t = new Date(hoje() + 'T12:00:00'); for (let i = n - 1; i >= 0; i--) { const d = new Date(t); d.setDate(t.getDate() - i); out.push(d.toISOString().slice(0, 10)); } return out; }
+function diasDe(n) { const all = [...new Set([...Object.keys(EST), ...Object.keys(VIS), ...Object.keys(RK)])].sort(); if (!n) return all; const out = [], t = new Date(hoje() + 'T12:00:00'); for (let i = n - 1; i >= 0; i--) { const d = new Date(t); d.setDate(t.getDate() - i); out.push(d.toISOString().slice(0, 10)); } return out; }
 function desenhar() {
   const h = hoje(), eh = EST[h] || {}; $('cAcHoje').textContent = fmt(eh.acessos); $('cApHoje').textContent = fmt(VIS[h]); $('cMinHoje').textContent = fmt(eh.tempo);
   // gráfico 30 dias
@@ -85,11 +85,12 @@ function desenhar() {
   const hs = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')), hm = Math.max(1, ...hs.map(x => s.hora[x] || 0));
   $('chHora').innerHTML = hs.map(x => `<div class="c" title="${x}h: ${fmt(s.hora[x])} acessos"><i style="height:${100 * (s.hora[x] || 0) / hm}%"></i></div>`).join(''); $('axHora').innerHTML = hs.map(x => `<span>${+x % 3 === 0 ? x + 'h' : ''}</span>`).join('');
   // tabela
-  const todos = diasDe(0).reverse(); $('tb').tBodies[0].innerHTML = todos.map(d => { const e = EST[d] || {}; return `<tr><td>${dBR(d)}/${d.slice(0, 4)}</td><td>${e.acessos != null ? fmt(e.acessos) : '–'}</td><td>${VIS[d] != null ? fmt(VIS[d]) : '–'}</td><td>${e.tempo != null ? fmt(e.tempo) : '–'}</td><td>${fmt((e.miss || {}).fim)}</td></tr>`; }).join('');
+  const todos = diasDe(0).reverse(); $('tb').tBodies[0].innerHTML = todos.map(d => { const e = EST[d] || {}; return `<tr><td>${dBR(d)}/${d.slice(0, 4)}</td><td>${e.acessos != null ? fmt(e.acessos) : '–'}</td><td>${VIS[d] != null ? fmt(VIS[d]) : '–'}</td><td>${e.tempo != null ? fmt(e.tempo) : '–'}</td><td>${e.miss ? fmt(e.miss.fim) : '–'}</td><td>${RK[d] != null ? fmt(RK[d]) : '–'}</td></tr>`; }).join('');
   const ini = Object.keys(EST).sort()[0]; $('ini').textContent = ini ? dBR(ini) + '/' + ini.slice(0, 4) : 'a próxima publicação do jogo';
   $('upd').textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (atualiza sozinho a cada minuto)'; }
 async function carregar() { // cada coleção é lida separada: se uma falhar, as outras aparecem mesmo assim
-  const [a, b, c] = await Promise.allSettled([fs.getDocs(fs.collection(db, 'estat')), fs.getDocs(fs.collection(db, 'visitas')), fs.getDocs(fs.collection(db, 'online'))]), erros = [];
+  const [a, b, c, k] = await Promise.allSettled([fs.getDocs(fs.collection(db, 'estat')), fs.getDocs(fs.collection(db, 'visitas')), fs.getDocs(fs.collection(db, 'online')), fs.getDocs(fs.collection(db, 'ranking'))]), erros = [];
+  if (k.status === 'fulfilled') { RK = {}; k.value.forEach(d => { const t = d.data().data; if (!t) return; const dia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(t.toDate()); RK[dia] = (RK[dia] || 0) + 1; }); }
   if (a.status === 'fulfilled') { EST = {}; a.value.forEach(d => EST[d.id] = d.data()); } else erros.push('acessos e detalhes');
   if (b.status === 'fulfilled') { VIS = {}; b.value.forEach(d => VIS[d.id] = d.data().n || 0); } else erros.push('aparelhos');
   if (c.status === 'fulfilled') { const agora = Date.now(); let on = 0; c.value.forEach(d => { const t = d.data().t; if (t && agora - t.toMillis() < 60000) on++; }); $('cOn').textContent = fmt(on); } else erros.push('jogando agora');
