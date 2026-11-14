@@ -547,7 +547,7 @@ const WP = [[165, 72], [20, 72], [8, 46], [-45, 40], [-110, 30], [-128, 10], [-1
 let peacocks = [], phase = 5, state = 'menu', found = 0, total = 5, survive = 0, yaw = Math.PI, pitch = 0.3, A = null, audio = null;
 let xp = 0, lvl = 1, stamina = 100, tired = false, boost = 0, ptime = 0, spots = 0, nearPk = 1e9, tafT = 0, tafS = false, focus = 0, gameT = 0, score = 0; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12;
 const PH = [5, 0, 0, 0], SURV = 75;
-const ORDER = [5, 0, 1, 2, 3, 4], slotOf = p => Math.max(0, ORDER.indexOf(p));
+const ORDER = [5, 6, 0, 1, 2, 3, 4], slotOf = p => Math.max(0, ORDER.indexOf(p));
 function beep(f, d = 0.12, type = 'sine', v = 0.15) { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + d); o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + d); } catch (e) {} }
 function gainXP(n) { xp += n; while (xp >= xpNeed()) { xp -= xpNeed(); lvl++; stamina = maxSt(); toast(`Subiu para o nível ${lvl}! Mais fôlego.`); beep(784, 0.12); setTimeout(() => beep(1047, 0.3), 120); } }
 function hideSpot() { for (let k = 0; k < 3000; k++) { const x = -225 + Math.random() * 465, z = -90 + Math.random() * 180; if (blocked(x, z, 1.2)) continue; if (Math.hypot(x - cabo.position.x, z - cabo.position.z) < 45) continue; if (peacocks.some(p => Math.hypot(x - p.position.x, z - p.position.z) < 35)) continue;
@@ -561,7 +561,9 @@ function startPhase(n) {
 }
 function hud() {
   $('lvl').textContent = `Nível ${lvl}`; $('pts').textContent = score; $('xpf').style.width = (100 * xp / xpNeed()).toFixed(0) + '%'; $('stf').style.width = (100 * stamina / maxSt()).toFixed(0) + '%'; $('stf').style.background = boost > 0 ? 'var(--gold)' : tired ? 'var(--alert)' : '';
-  $('qname').textContent = phase < 4 ? `Missão ${slotOf(phase) + 1} de 6 · Pavões à solta` : phase === 5 ? 'Missão 1 de 6 · Honras de portaló' : 'Missão 6 de 6 · A ronda do Almirante';
+  if (phase === 6) return hudCav();
+  const NM = `Missão ${slotOf(phase) + 1} de ${ORDER.length}`;
+  $('qname').textContent = phase < 4 ? `${NM} · Pavões à solta` : phase === 5 ? `${NM} · Honras de portaló` : `${NM} · A ronda do Almirante`;
   $('qgoal').textContent = phase < 4 ? `Recolher os pavões: ${found} de ${total}` : phase === 5 ? '' : `Não ser visto por ${Math.ceil(Math.max(0, survive))} s`; if (phase < 4) $('qgoal').textContent += ` · ${fmt(ptime)}`;
   $('meterLabel').textContent = phase < 4 ? 'Sinal de pavão' : phase === 5 ? 'Chegada da lancha' : 'Distância do Almirante'; if (phase >= 1 && phase < 4) hudMission(); else if (phase === 5) hudPortalo();
 }
@@ -569,10 +571,10 @@ function say(who, title, text, btn, fn, cls = '') { state = 'pause'; $('dlg').cl
 const respawn = () => { cabo.position.set(SPAWN[0], Y0, SPAWN[1]); };
 const intro = () => say('Sargento', 'Honras de portaló', 'Cabo Velho, o <b>Contra-Almirante</b> chega de lancha ao cais daqui a pouco. Manda a tradição: <b>seis boys</b> perfilados em duas filas de três no portaló para receber a autoridade.<br><br>Há <b>10 marinheiros</b> espalhados pela ilha. Encoste em seis deles — eles entram na fila atrás de você — e leve todos até a marca do portaló, no cais, <b>antes de a lancha atracar</b>. O Mestre da Ilha e o Oficial de Serviço já estão lá esperando.<br><br><b>Andar:</b> W A S D ou setas. <b>Correr:</b> Shift (gasta fôlego). <b>Câmera:</b> arraste a tela.<br>No celular, arraste o lado esquerdo para andar (até o fim para correr) e o direito para olhar.' + obj(5), 'Aceitar missão', () => { score = 0; respawn(); startPhase(5); });
 
-function nextPhase() {
-  const s = slotOf(phase), n = ORDER[s + 1], st0 = ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1, sr = starsFor(phase, st0, ptime); score += 1000 + st0 * 500 + Math.max(0, Math.round((300 - ptime) * 2)); hud(); gainXP(60 + slotOf(phase) * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
+function nextPhase(stOverride) {
+  const s = slotOf(phase), n = ORDER[s + 1], st0 = stOverride || (ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1), sr = starsFor(phase, st0, ptime); score += 1000 + st0 * 500 + Math.max(0, Math.round((300 - ptime) * 2)); hud(); gainXP(60 + slotOf(phase) * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
   if (n !== 4) say('Sargento', `Missão ${s + 1} cumprida`, `${sr}${BRIEF[n]}${obj(n)}`, 'Próxima missão', () => startPhase(n));
-  else say('Sargento', 'Missão final (6 de 6)', `${sr}Cabo Velho, más notícias: o Almirante saiu para a ronda e você está fora do posto. Fique <b>${SURV} segundos</b> sem ser pego.<br><br>O cone amarelo mostra para onde ele olha. Prédios bloqueiam a visão dele, e debaixo das árvores ele só enxerga de perto. Ele aparece em vermelho no minimapa.${obj(4)}`, 'Encarar', () => startPhase(4));
+  else say('Sargento', `Missão final (${ORDER.length} de ${ORDER.length})`, `${sr}Cabo Velho, más notícias: o Almirante saiu para a ronda e você está fora do posto. Fique <b>${SURV} segundos</b> sem ser pego.<br><br>O cone amarelo mostra para onde ele olha. Prédios bloqueiam a visão dele, e debaixo das árvores ele só enxerga de perto. Ele aparece em vermelho no minimapa.${obj(4)}`, 'Encarar', () => startPhase(4));
 }
 // input
 const keys = {}; addEventListener('keydown', e => { keys[e.code] = 1; if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault(); }); addEventListener('keyup', e => keys[e.code] = 0); addEventListener('blur', () => { for (const k in keys) keys[k] = 0; });
@@ -687,6 +689,7 @@ function updTractor(dt, P) {
   const p = trac.position, a = TP[TR.seg], b = TP[TR.seg + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), hx = (b[0] - a[0]) / L * TR.dir, hz = (b[1] - a[1]) / L * TR.dir;
   let da = Math.atan2(hx, hz) - trac.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); trac.rotation.y += Math.sign(da) * Math.min(Math.abs(da), dt * 0.7);
   const fx = Math.sin(trac.rotation.y), fz = Math.cos(trac.rotation.y), near = [P, ofc.position, adm.visible ? adm.position : P].some(q => { const dx = q.x - p.x, dz = q.z - p.z; return dx * fx + dz * fz > -1 && Math.hypot(dx, dz) < 5.5; });
+  if (phase === 6) TR.pause = 1; // trator parado durante o incêndio
   let want = 1.5; if (TR.pause > 0) { TR.pause -= dt; want = 0; } if (near || Math.abs(da) > 0.5) want = 0;
   TR.v += (want - TR.v) * Math.min(1, dt * 2); TR.s += TR.v * dt * TR.dir;
   if (TR.s > L) { if (TR.seg < TP.length - 2) { TR.seg++; TR.s = 0; } else { TR.s = L; TR.dir = -1; TR.pause = 4; } } else if (TR.s < 0) { if (TR.seg > 0) { TR.seg--; const q = TP[TR.seg], r = TP[TR.seg + 1]; TR.s = Math.hypot(r[0] - q[0], r[1] - q[1]); } else { TR.s = 0; TR.dir = 1; TR.pause = 4; } }
@@ -698,7 +701,7 @@ function vehiclePush(P) { for (const [o, r] of [[trac.position, 1.7], [trail.pos
 window.__x = { ofc, O, birds, trac, TP, TR };
 
 // ================= EXTRAS 2: stars/records, golden stars, ferry, hugging sergeant, troop, painters, ambient sound =================
-const T3 = [150, 150, 150, 90, 0, 90], T2 = [240, 240, 240, 150, 0, 150], fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+const T3 = [150, 150, 150, 90, 0, 90, 75], T2 = [240, 240, 240, 150, 0, 150, 120], fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 let REC = {}; try { REC = JSON.parse(localStorage.getItem('pavoes_rec') || '{}'); } catch (e) {}
 function starsFor(n, st, time) { const r = REC[n] || {}; let rec = ''; if (time != null) { if (r.t == null || time < r.t) { rec = r.t == null ? ' · primeiro recorde!' : ' · novo recorde!'; r.t = Math.round(time); } else rec = ` · recorde ${fmt(r.t)}`; } r.s = Math.max(r.s || 0, st); REC[n] = r; try { localStorage.setItem('pavoes_rec', JSON.stringify(REC)); } catch (e) {}
   return `<span class="stars">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span> ${time != null ? 'Tempo ' + fmt(time) + rec : (spots ? `Visto ${spots} vez${spots > 1 ? 'es' : ''}` : 'Nunca foi visto') + ` · melhor: ${r.s} estrela${r.s > 1 ? 's' : ''}`}<br><br>`; }
@@ -842,7 +845,7 @@ function trackPt(d) { const cx = 97.5, cz = 15, hx = 59.25, hz = 43.75, r = 26.7
   if (d < sx) return [cx - sx / 2 + d, cz - hz]; d -= sx; if (d < q) return arc(cx + sx / 2, cz - sz / 2, -Math.PI / 2, d); d -= q; if (d < sz) return [cx + hx, cz - sz / 2 + d]; d -= sz; if (d < q) return arc(cx + sx / 2, cz + sz / 2, 0, d); d -= q;
   if (d < sx) return [cx + sx / 2 - d, cz + hz]; d -= sx; if (d < q) return arc(cx - sx / 2, cz + sz / 2, Math.PI / 2, d); d -= q; if (d < sz) return [cx - hx, cz + sz / 2 - d]; d -= sz; return arc(cx - sx / 2, cz - sz / 2, Math.PI, d); }
 const holeM = new THREE.MeshBasicMaterial({ color: 0x15100c, transparent: true, opacity: 0.92, depthWrite: false }), wornM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false }), bagM = M(0x1c1c1e, 0.4), junk = [M(0xc9b28a), M(0xd94a2b), M(0x3aa0e8), M(0xf2f2f2)];
-function setupMission(n) { MS.trash.concat(MS.spots).forEach(o => scene.remove(o)); MS.trash = []; MS.spots = []; MS.got = MS.fixed = MS.n = 0; MS.roller = false; roller.visible = bag.visible = false; setupSoccer(n === 3); setupPortalo(n === 5);
+function setupMission(n) { MS.trash.concat(MS.spots).forEach(o => scene.remove(o)); MS.trash = []; MS.spots = []; MS.got = MS.fixed = MS.n = 0; MS.roller = false; roller.visible = bag.visible = false; setupSoccer(n === 3); setupPortalo(n === 5); setupCav(n === 6);
   if (n === 1) { const pts = TRASHPTS.filter(p => !blocked(p[0], p[1], 1)).sort(() => Math.random() - 0.5).slice(0, 4); for (const [x, z] of pts) { const g = new THREE.Group(); g.position.set(x, Y0, z); part(g, new THREE.SphereGeometry(0.42, 10, 8), bagM, 0, 0.36, 0).scale.set(1, 0.9, 1); part(g, new THREE.SphereGeometry(0.32, 10, 8), bagM, 0.5, 0.28, 0.25); for (let i = 0; i < 7; i++) { const b = part(g, new THREE.BoxGeometry(0.2 + Math.random() * 0.25, 0.12 + Math.random() * 0.2, 0.2 + Math.random() * 0.2), junk[i % 4], Math.random() * 1.6 - 0.8, 0.1, Math.random() * 1.6 - 0.8); b.rotation.set(Math.random(), Math.random() * 3, Math.random()); } scene.add(g); MS.trash.push(g); } }
   if (n === 2) { MS.n = 5 + Math.floor(Math.random() * 6); const off = Math.random() * 366; for (let i = 0; i < MS.n; i++) { const [x, z] = trackPt(off + (i + Math.random() * 0.5) * 366 / MS.n), g = new THREE.Group(); g.position.set(x + Math.random() * 3 - 1.5, Y0 + 0.05, z + Math.random() * 3 - 1.5); const w = new THREE.Mesh(new THREE.CircleGeometry(3.4, 9).rotateX(-Math.PI / 2), wornM); w.scale.set(1, 1, 0.6); w.rotation.y = Math.random() * 3; g.add(w); for (let k = 0; k < 3; k++) { const h = new THREE.Mesh(new THREE.CircleGeometry(0.5 + Math.random() * 0.6, 7).rotateX(-Math.PI / 2), holeM); h.position.set(Math.random() * 2.4 - 1.2, 0.02, Math.random() * 1.6 - 0.8); g.add(h); } scene.add(g); MS.spots.push(g); } } }
 function updMission(dt, P) { if (phase === 3) return updSoccer(dt, P); let near = 1e9; const dist = o => Math.hypot(P.x - o.position.x, P.z - o.position.z);
@@ -851,8 +854,8 @@ function updMission(dt, P) { if (phase === 3) return updSoccer(dt, P); let near 
   else if (!MS.roller) near = dist(mestre);
   else { for (const g of MS.spots) { const d = dist(g); near = Math.min(near, d); if (d < 2.6) { scene.remove(g); MS.spots = MS.spots.filter(q => q !== g); MS.fixed++; beep(620 + MS.fixed * 40, 0.12, 'triangle'); toast(`Trecho recuperado: ${MS.fixed} de ${MS.n}`); gainXP(15); } } if (!MS.spots.length) { roller.visible = false; nextPhase(); } }
   return Math.max(0, 1 - near / 110); }
-function hudMission() { if (phase === 3) return hudSoccer(); const t = ` · ${fmt(ptime)}`; if (phase === 1) { $('qname').textContent = 'Missão 3 de 6 · Faxina na ilha'; $('qgoal').textContent = (MS.got < 4 ? `Recolher o lixo: ${MS.got} de 4` : 'Leve o lixo ao contêiner do mastro') + t; $('meterLabel').textContent = MS.got < 4 ? 'Sinal de lixo' : 'Distância do contêiner'; }
-  else { $('qname').textContent = 'Missão 4 de 6 · Reforma da pista'; $('qgoal').textContent = (!MS.roller ? 'Ache o Mestre da Ilha e pegue o rolo' : `Pintar a pista: ${MS.fixed} de ${MS.n}`) + t; $('meterLabel').textContent = !MS.roller ? 'Sinal do Mestre' : 'Sinal da pista'; } }
+function hudMission() { if (phase === 3) return hudSoccer(); const t = ` · ${fmt(ptime)}`; if (phase === 1) { $('qname').textContent = `Missão ${slotOf(phase) + 1} de ${ORDER.length} · Faxina na ilha`; $('qgoal').textContent = (MS.got < 4 ? `Recolher o lixo: ${MS.got} de 4` : 'Leve o lixo ao contêiner do mastro') + t; $('meterLabel').textContent = MS.got < 4 ? 'Sinal de lixo' : 'Distância do contêiner'; }
+  else { $('qname').textContent = `Missão ${slotOf(phase) + 1} de ${ORDER.length} · Reforma da pista`; $('qgoal').textContent = (!MS.roller ? 'Ache o Mestre da Ilha e pegue o rolo' : `Pintar a pista: ${MS.fixed} de ${MS.n}`) + t; $('meterLabel').textContent = !MS.roller ? 'Sinal do Mestre' : 'Sinal da pista'; } }
 // ---- Marinheiro de Manobra walking around the island ----
 const sailor = human({ collar: true, skin: 0x9a6a48 }); scene.add(sailor); tag(sailor, 'Marinheiro de Manobra'); const SL = { i: 60, cool: 0 };
 { const br = new THREE.Group(); br.position.set(0, -0.28, 0.03); br.rotation.x = 0.75; part(br, new THREE.CylinderGeometry(0.016, 0.016, 1.5, 6), M(0x9a6a3a), 0, -0.25, 0); part(br, new THREE.BoxGeometry(0.36, 0.06, 0.1), M(0x6e4a22), 0, -1.0, 0); part(br, new THREE.BoxGeometry(0.34, 0.2, 0.07), M(0xd9b45a, 0.95), 0, -1.12, 0); sailor.userData.elR.add(br); }
@@ -882,7 +885,7 @@ function drawMap4(g, P, T) { const dot = (o, c, r = 2.2) => { g.fillStyle = c; g
   g.fillStyle = '#f7f4ec'; g.fillRect(mx(CHP[0]) - 2, mz(CHP[1]) - 2, 4, 4); g.fillStyle = '#1f4e9c'; for (const q of guards) g.fillRect(mx(q.x) - 1.5, mz(q.z) - 1.5, 3, 3);
   if (phase === 1) { for (const t of MS.trash) if (Math.hypot(t.position.x - P.x, t.position.z - P.z) < R) dot(t, '#8a5a2b', 2.6); g.fillStyle = '#2e7d32'; const s = MS.got >= 4 ? 3 + Math.sin(T * 6) : 2; g.fillRect(mx(BIN[0]) - s, mz(BIN[1]) - s, s * 2, s * 2); }
   if (phase === 2) { if (MS.roller) for (const t of MS.spots) dot(t, '#ff8a2b', 2); else if (Math.hypot(mestre.position.x - P.x, mestre.position.z - P.z) < R * 1.5) dot(mestre, '#c77dff', 2.8 + Math.sin(T * 6) * 0.6); }
-  if (phase === 3 && SC.on) { dot(SC.ball, '#ffffff', 2.4); g.strokeStyle = '#ffd21f'; g.lineWidth = 1.5; g.strokeRect(mx(GLX) - 2.5, mz(GZc) - 3, 3, 6); } if (phase === 5) mapPortalo(g, P, T);
+  if (phase === 3 && SC.on) { dot(SC.ball, '#ffffff', 2.4); g.strokeStyle = '#ffd21f'; g.lineWidth = 1.5; g.strokeRect(mx(GLX) - 2.5, mz(GZc) - 3, 3, 6); } if (phase === 5) mapPortalo(g, P, T); if (phase === 6) mapCav(g, P, T);
   if (chap.visible) dot(chap, '#ffffff', 2.2); dot(sailor, '#7fd6ff', 1.8); }
 window.__x4 = { CH, chap, MS, mestre, sailor, guards, CV, CVS, trackPt, setGameT: v => gameT = v, setFocus: v => focus = v };
 
@@ -919,7 +922,7 @@ function updSoccer(dt, P) { const b = SC.ball.position, A = SC.pl.filter(p => p.
   if ((SC.subT -= dt) <= 0 && dP < 60) { SC.subT = 3 + Math.random() * 2.2; talk(s, SUBTXT[Math.floor(Math.random() * 3)], 2.8); }
   return Math.max(0, 1 - (SC.live ? Math.hypot(P.x - b.x, P.z - b.z) / 60 : dP / 110)); }
 function taf2(txt) { const e = $('taf'), old = e.textContent; e.textContent = txt; e.style.opacity = 1; e.style.letterSpacing = '.12em'; setTimeout(() => { e.style.opacity = 0; e.style.letterSpacing = '.02em'; setTimeout(() => { e.textContent = old; }, 500); }, 2200); }
-function hudSoccer() { $('qname').textContent = 'Missão 5 de 6 · Goleiro da pelada'; $('qgoal').textContent = (!SC.live ? 'Vá para o gol do lado da piscina' : `Defenda 1 chute · gols sofridos: ${SC.goals}`) + ` · ${fmt(ptime)}`; $('meterLabel').textContent = SC.live ? 'Distância da bola' : 'Distância do gol'; }
+function hudSoccer() { $('qname').textContent = `Missão ${slotOf(3) + 1} de ${ORDER.length} · Goleiro da pelada`; $('qgoal').textContent = (!SC.live ? 'Vá para o gol do lado da piscina' : `Defenda 1 chute · gols sofridos: ${SC.goals}`) + ` · ${fmt(ptime)}`; $('meterLabel').textContent = SC.live ? 'Distância da bola' : 'Distância do gol'; }
 window.__sc = SC;
 
 // ================= EXTRAS 6: score and Top 5 ranking =================
@@ -1122,7 +1125,7 @@ function updPortalo(dt, P) {
   return u;
 }
 function hudPortalo() {
-  $('qname').textContent = 'Missão 1 de 6 · Honras de portaló';
+  $('qname').textContent = `Missão ${slotOf(5) + 1} de ${ORDER.length} · Honras de portaló`;
   const left = Math.max(0, PTDUR - ptime);
   $('qgoal').textContent = (PT.st === 'search' ? (PT.got < 6 ? `Marinheiros: ${PT.got} de 6` : 'Leve os seis à marca do portaló') : PT.st === 'form' ? 'Formar nas marcas!' : PT.st === 'late' ? 'A lancha atracou…' : 'Honras de portaló') + ` · lancha em ${fmt(left)}`;
   $('meterLabel').textContent = 'Chegada da lancha';
@@ -1134,6 +1137,347 @@ function mapPortalo(g, P, T) {
   if (LN.visible) { const x = mx(LN.position.x), z = mz(LN.position.z); if (x > 0 && x < mm.width && z > 0 && z < mm.height) { g.fillStyle = '#7fd6ff'; g.fillRect(x - 2, z - 3, 4, 6); } }
 }
 window.__pt = { PT, LN, SLOTS, PIER, renderer, APITO, apitoPrep, get phase() { return phase; }, get st() { return PT.st; }, setT: v => ptime = v, apito };
+
+// ================= EXTRAS 9: Incêndio na Ilha (CAv) — missão 2 de 7 =================
+BRIEF[6] = 'Portaló impecável, Cabo Velho! Hoje você é o <b>Líder do Grupo Fixo de Combate a Incêndio</b>. Se tocar o alarme, quem comanda os brigadistas é você.';
+OBJ[6] = 'identifique a <b>classe do incêndio</b>, mande cada brigadista com o <b>extintor certo</b> e, se for elétrico ou cozinha, <b>corte a energia</b> antes. Isole a área e leve o pessoal ao <b>ponto de reunião</b>.';
+const cvR = (a, b) => a + Math.random() * (b - a), cvC = (r, g, b) => new THREE.Color(r, g, b);
+// ---------- partículas (fogo, fumaça, jatos, espuma) — mesmo visual da prévia aprovada ----------
+const cvSoft = canvasTex(64, 64, (g, w) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.4, 'rgba(255,255,255,.6)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, w, w); });
+const cvScale = () => innerHeight / 2 * renderer.getPixelRatio(); // mesmo tamanho na tela em qualquer celular
+function cvParticles(max, additive) {
+  const S = { max, list: [] }, g = new THREE.BufferGeometry();
+  S.pos = new Float32Array(max * 3); S.col = new Float32Array(max * 3); S.size = new Float32Array(max); S.alpha = new Float32Array(max);
+  g.setAttribute('position', new THREE.BufferAttribute(S.pos, 3)); g.setAttribute('pcolor', new THREE.BufferAttribute(S.col, 3)); g.setAttribute('size', new THREE.BufferAttribute(S.size, 1)); g.setAttribute('alpha', new THREE.BufferAttribute(S.alpha, 1));
+  S.mat = new THREE.ShaderMaterial({ uniforms: { map: { value: cvSoft }, scale: { value: cvScale() } }, transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    vertexShader: 'attribute float size;attribute float alpha;attribute vec3 pcolor;uniform float scale;varying vec3 vC;varying float vA;void main(){vC=pcolor;vA=alpha;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=size*scale/-mv.z;gl_Position=projectionMatrix*mv;}',
+    fragmentShader: 'uniform sampler2D map;varying vec3 vC;varying float vA;void main(){vec4 t=texture2D(map,gl_PointCoord);gl_FragColor=vec4(vC,vA*t.a);}' });
+  S.points = new THREE.Points(g, S.mat); S.points.frustumCulled = false; S.points.renderOrder = 5; scene.add(S.points);
+  S.add = o => { if (S.list.length < max) S.list.push(Object.assign({ t: 0, drag: 0, grav: 0, fin: 8 }, o)); };
+  S.clear = () => { S.list.length = 0; g.setDrawRange(0, 0); };
+  S.update = dt => { const L = S.list, floor = Y0 + 0.03; let n = 0;
+    for (let i = 0; i < L.length; i++) { const p = L[i]; p.t += dt; if (p.t >= p.life) continue;
+      p.v.y += p.grav * dt; p.v.multiplyScalar(Math.max(0, 1 - p.drag * dt)); p.p.addScaledVector(p.v, dt);
+      if (p.p.y < floor) { if (p.land) { p.land(p); continue; } p.p.y = floor; p.v.y = 0; p.v.x *= .5; p.v.z *= .5; }
+      const k = p.t / p.life; S.pos[n * 3] = p.p.x; S.pos[n * 3 + 1] = p.p.y; S.pos[n * 3 + 2] = p.p.z;
+      S.col[n * 3] = p.c0.r + (p.c1.r - p.c0.r) * k; S.col[n * 3 + 1] = p.c0.g + (p.c1.g - p.c0.g) * k; S.col[n * 3 + 2] = p.c0.b + (p.c1.b - p.c0.b) * k;
+      S.size[n] = p.s0 + (p.s1 - p.s0) * k; S.alpha[n] = (p.a0 + (p.a1 - p.a0) * k) * Math.min(1, p.t * p.fin); L[n++] = p; }
+    L.length = n; for (const a of ['position', 'pcolor', 'size', 'alpha']) g.attributes[a].needsUpdate = true; g.setDrawRange(0, n); };
+  return S;
+}
+const CFX = { foam: cvParticles(2600, false), flame: cvParticles(1400, true), smoke: cvParticles(900, false), spray: cvParticles(2400, false), spark: cvParticles(200, true) };
+addEventListener('resize', () => { for (const k in CFX) CFX[k].mat.uniforms.scale.value = cvScale(); });
+// fogo: k 0..1 controla tamanho de chamas, fumaça e luz
+const cvFire = { o: new THREE.Vector3(), r: 1, k: 0, on: false, acc: 0, sacc: 0, light: new THREE.PointLight(0xff7a2a, 0, 16, 1.6) }; scene.add(cvFire.light);
+function cvFireUpd(dt) { const F = cvFire, k = F.on ? Math.max(.12, F.k) : 0; F.light.position.set(F.o.x, F.o.y + 1, F.o.z); F.light.intensity = k ? (6 + Math.random() * 4) * k * 4 : 0; if (!k) return;
+  F.acc += dt * 170 * k; while (F.acc > 1) { F.acc--; const a = Math.random() * 6.28, rr = Math.sqrt(Math.random()) * F.r * (0.5 + k * .7);
+    CFX.flame.add({ p: new THREE.Vector3(F.o.x + Math.cos(a) * rr, F.o.y + .05, F.o.z + Math.sin(a) * rr), v: new THREE.Vector3(cvR(-.3, .3), cvR(1.6, 3.2) * (0.6 + k), cvR(-.3, .3)), life: cvR(.45, .95) * (0.7 + k * .6), s0: cvR(1.1, 1.8) * (0.5 + k), s1: .15, c0: cvC(1, .85, .45), c1: cvC(.9, .18, .03), a0: .85, a1: 0, drag: .6 }); }
+  F.sacc += dt * 22 * k; while (F.sacc > 1) { F.sacc--;
+    CFX.smoke.add({ p: new THREE.Vector3(F.o.x + cvR(-.4, .4) * F.r, F.o.y + 1.2 + k * 1.6, F.o.z + cvR(-.4, .4) * F.r), v: new THREE.Vector3(cvR(.2, .7), cvR(1, 1.8), cvR(-.2, .2)), life: cvR(3, 5), s0: 1.4 * (0.5 + k), s1: 5.5 * (0.5 + k), c0: cvC(.12, .12, .12), c1: cvC(.42, .42, .44), a0: .55, a1: 0, drag: .15 }); } }
+const CV_JET = {
+  agua: { c0: cvC(.25, .55, 1), c1: cvC(.7, .85, 1), sp: 13, spread: .035, grav: -9, s0: .32, s1: .7, life: .85, a0: 1, rate: 420, drag: .2 },
+  espuma: { c0: cvC(1, 1, .98), c1: cvC(.96, .96, .92), sp: 9, spread: .1, grav: -7, s0: .55, s1: 1.1, life: 1.5, a0: 1, rate: 320, drag: .3, foam: true },
+  po: { c0: cvC(1, .86, .35), c1: cvC(1, .93, .7), sp: 11, spread: .18, grav: -.8, s0: .35, s1: 2.4, life: 1.4, a0: .7, rate: 220, drag: 1.6 },
+  co2: { c0: cvC(1, 1, 1), c1: cvC(.92, .95, 1), sp: 12, spread: .22, grav: .2, s0: .3, s1: 2.8, life: .9, a0: .75, rate: 240, drag: 2.2, pulse: true },
+  apc: { c0: cvC(.9, 1, .92), c1: cvC(.82, .95, .85), sp: 7, spread: .08, grav: -7, s0: .22, s1: .6, life: 1.1, a0: .9, rate: 200, drag: .3 },
+  areia: { c0: cvC(.85, .74, .48), c1: cvC(.8, .7, .45), sp: 6, spread: .15, grav: -9, s0: .18, s1: .28, life: .8, a0: 1, rate: 140, drag: .2 } };
+function cvFoamLand(p) { if (Math.random() > .5) return; const a = Math.random() * 6.28, s = cvR(.4, 1.2);
+  CFX.foam.add({ p: new THREE.Vector3(p.p.x, Y0 + .1, p.p.z), v: new THREE.Vector3(Math.cos(a) * s + p.v.x * .25, 0, Math.sin(a) * s + p.v.z * .25), life: cvR(7, 10), s0: cvR(.6, .9), s1: cvR(1.4, 1.9), c0: cvC(1, 1, .98), c1: cvC(.9, .9, .86), a0: .95, a1: 0, drag: 1.2, fin: 30 }); }
+// solta o jato de um brigadista; devolve false nos intervalos da rajada do CO2
+function cvJet(b, from, dir, dt) { const J = CV_JET[b.task.kind];
+  if (J.pulse) { b.pulse = (b.pulse + dt) % 1.8; if (b.pulse > 1.0) { b.jacc = 0; return false; } }
+  b.jacc += dt * J.rate; const tmp = new THREE.Vector3();
+  while (b.jacc > 1) { b.jacc--; const d = dir.clone().add(tmp.set(cvR(-1, 1), cvR(-1, 1), cvR(-1, 1)).multiplyScalar(J.spread)).normalize();
+    if (J.foam && Math.random() < .14) { CFX.spray.add({ p: from.clone(), v: d.multiplyScalar(J.sp * cvR(.25, .5)).add(new THREE.Vector3(cvR(-.3, .3), cvR(.3, .8), cvR(-.3, .3))), life: cvR(2.5, 4), s0: cvR(.12, .25), s1: .3, c0: J.c0, c1: J.c1, a0: 1, a1: 0, grav: .15, drag: 1.4, fin: 200 }); continue; }
+    CFX.spray.add({ p: from.clone(), v: d.multiplyScalar(J.sp * cvR(.85, 1.1)), life: J.life * cvR(.9, 1.3), s0: J.s0, s1: J.s1, c0: J.c0, c1: J.c1, a0: J.a0, a1: J.foam ? .7 : 0, grav: J.grav, drag: J.drag, fin: 200, land: J.foam ? cvFoamLand : null }); }
+  return true; }
+
+// ---------- objetos da fase (todos dentro de CAV.root, que só aparece na fase 6) ----------
+const CV_EXT = { agua: ['ÁGUA', '#1e6fd9', '#fff'], espuma: ['ESPUMA', '#f2ecd2', '#111'], po: ['PÓ QUÍMICO', '#f2c21c', '#111'], co2: ['CO2', '#151515', '#fff'], apc: ['APC', '#2f9e4f', '#fff'] };
+const CV_NOME = { agua: 'Água', espuma: 'Espuma', po: 'Pó químico', co2: 'CO2', apc: 'APC', areia: 'areia' };
+const cvRed = new THREE.MeshStandardMaterial({ color: 0xc81e1e, roughness: .35, metalness: .2 }), cvBlack = M(0x111111, .6), cvBandTex = {};
+function cvExtintor(kind) { // extintor sem mangueira (a mangueira é desenhada à parte quando está na mão)
+  const g = new THREE.Group(); if (kind === 'areia') { part(g, new THREE.CylinderGeometry(.2, .15, .32, 16), cvRed, 0, .16, 0); const s = part(g, new THREE.CircleGeometry(.19, 16).rotateX(-Math.PI / 2), M(0xd9c48a), 0, .3, 0); s.castShadow = false; g.userData.h = .2; g.userData.r = .1; return g; }
+  const co2 = kind === 'co2', r = co2 ? .16 : .14, h = co2 ? .75 : .62; g.userData.h = h; g.userData.r = r;
+  part(g, new THREE.CylinderGeometry(r, r, h, 18), cvRed, 0, h / 2 + .02, 0); part(g, new THREE.SphereGeometry(r, 16, 8, 0, 6.3, 0, 1.57), cvRed, 0, h + .02, 0);
+  part(g, new THREE.CylinderGeometry(.05, .05, .1, 10), cvBlack, 0, h + r + .06, 0); part(g, new THREE.BoxGeometry(.24, .03, .05), cvBlack, .06, h + r + .13, 0);
+  const [txt, col, fg] = CV_EXT[kind]; const t = cvBandTex[kind] || (cvBandTex[kind] = canvasTex(256, 128, (c, w, hh) => { c.fillStyle = col; c.fillRect(0, 0, w, hh); c.fillStyle = fg; c.font = `900 ${txt.length > 6 ? 30 : 46}px sans-serif`; c.textAlign = 'center'; c.fillText(txt, w / 2, 78); }));
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(r + .004, r + .004, .2, 18, 1, true), new THREE.MeshStandardMaterial({ map: t })); band.position.y = h * .55; g.add(band); return g; }
+const CAV = { on: false, cspd: 0, root: new THREE.Group(), cst: {}, goal: null, brig: [], crowd: [], erros: 0, k: 0, energy: true, rectsOn: [] };
+CAV.root.visible = false; scene.add(CAV.root);
+// quadro elétrico na parede, com chave geral ao lado
+CAV.qd = new THREE.Group(); { const g = CAV.qd, gray = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: .5, roughness: .45 });
+  part(g, new THREE.BoxGeometry(1.2, 1.6, .32), gray, 0, 1.7, .16); part(g, new THREE.BoxGeometry(1.08, 1.48, .02), new THREE.MeshStandardMaterial({ color: 0x7c838a, metalness: .5 }), 0, 1.7, .33); part(g, new THREE.BoxGeometry(.05, .25, .05), cvBlack, .45, 1.7, .35);
+  const warn = canvasTex(128, 128, c => { c.fillStyle = '#ffd400'; c.beginPath(); c.moveTo(64, 8); c.lineTo(122, 116); c.lineTo(6, 116); c.closePath(); c.fill(); c.lineWidth = 7; c.strokeStyle = '#111'; c.stroke(); c.fillStyle = '#111'; c.beginPath(); c.moveTo(70, 34); c.lineTo(48, 78); c.lineTo(64, 78); c.lineTo(56, 106); c.lineTo(82, 62); c.lineTo(66, 62); c.closePath(); c.fill(); });
+  const w = new THREE.Mesh(new THREE.PlaneGeometry(.42, .42), new THREE.MeshStandardMaterial({ map: warn, transparent: true })); w.position.set(0, 1.95, .345); g.add(w);
+  const tg = new THREE.Mesh(new THREE.PlaneGeometry(.6, .15), new THREE.MeshStandardMaterial({ map: canvasTex(256, 64, (c, W, H) => { c.fillStyle = '#fff'; c.fillRect(0, 0, W, H); c.fillStyle = '#111'; c.font = '900 34px sans-serif'; c.textAlign = 'center'; c.fillText('QDF · 380 V', W / 2, 44); }) })); tg.position.set(0, 1.3, .345); g.add(tg);
+  const pipe = M(0x6b6f73, .4); part(g, new THREE.CylinderGeometry(.05, .05, 1.8, 8), pipe, -.35, 3.4, .1); part(g, new THREE.CylinderGeometry(.05, .05, 1.8, 8), pipe, .35, 3.4, .1);
+  g.userData.lg = part(g, new THREE.SphereGeometry(.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0x30ff60 }), -.3, 1.08, .35); g.userData.lr = part(g, new THREE.SphereGeometry(.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0x441111 }), -.12, 1.08, .35);
+  part(g, new THREE.BoxGeometry(.35, .5, .18), M(0xc0392b, .6), 1.4, 1.5, .09); g.userData.lever = part(g, new THREE.BoxGeometry(.06, .3, .06), cvBlack, 1.4, 1.65, .22); CAV.root.add(g); }
+// barraquinha do rancho com fritadeira (sem cobertura)
+CAV.fry = new THREE.Group(); { const g = CAV.fry, posts = new THREE.MeshStandardMaterial({ color: 0x9aa3ab, metalness: .6, roughness: .4 });
+  const pad = part(g, new THREE.BoxGeometry(6, .08, 5), M(0xb9b4a8, .9), 0, .04, 0); pad.receiveShadow = true;
+  for (const x of [-2.3, 2.3]) part(g, new THREE.CylinderGeometry(.05, .05, 2.65, 8), posts, x, 1.32, 1.6);
+  part(g, new THREE.BoxGeometry(4.6, .45, .04), new THREE.MeshStandardMaterial({ map: canvasTex(512, 64, (c, w, h) => { c.fillStyle = '#1f3d7a'; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 40px sans-serif'; c.textAlign = 'center'; c.fillText('RANCHO', w / 2, 46); }) }), 0, 2.4, 1.62);
+  part(g, new THREE.BoxGeometry(4.4, .1, 1.2), new THREE.MeshStandardMaterial({ color: 0xd8d8d8, metalness: .5, roughness: .35 }), 0, 1, .9); part(g, new THREE.BoxGeometry(4.4, .9, 1.1), new THREE.MeshStandardMaterial({ color: 0x6e7680, metalness: .4 }), 0, .5, .9);
+  part(g, new THREE.BoxGeometry(.9, .5, .7), new THREE.MeshStandardMaterial({ color: 0xcfd4d8, metalness: .8, roughness: .25 }), -.6, 1.3, .9); part(g, new THREE.BoxGeometry(.74, .02, .52), M(0xc8961e, .15), -.6, 1.56, .9);
+  g.userData.lamp = part(g, new THREE.SphereGeometry(.04, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff3030 }), -.3, 1.3, 1.26); part(g, new THREE.BoxGeometry(.25, .35, .12), M(0xe0e0e0), 2.3, 1.2, 1.5);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-.15, 1.2, 1.2), new THREE.Vector3(.8, .35, 1.5), new THREE.Vector3(2.2, 1.05, 1.5)]), 20, .015, 6), cvBlack)); CAV.root.add(g); }
+// carrinho de extintores
+CAV.cart = new THREE.Group(); { const g = CAV.cart, metal = new THREE.MeshStandardMaterial({ color: 0x3d4752, metalness: .6, roughness: .4 });
+  part(g, new THREE.BoxGeometry(2.8, .06, .9), metal, 0, .45, 0); part(g, new THREE.BoxGeometry(2.8, .06, .06), metal, 0, 1.1, -.42); part(g, new THREE.BoxGeometry(2.8, .06, .06), metal, 0, .75, -.42);
+  for (const x of [-1.38, 1.38]) part(g, new THREE.CylinderGeometry(.025, .025, 1.1, 8), metal, x, 1, -.42); part(g, new THREE.BoxGeometry(.06, .06, 1.1), metal, 1.6, 1, 0);
+  for (const x of [-1.2, 1.2]) for (const z of [-.5, .5]) { const w = part(g, new THREE.TorusGeometry(.2, .07, 10, 18), cvBlack, x, .22, z); w.castShadow = false; }
+  part(g, new THREE.PlaneGeometry(2.4, .45), new THREE.MeshStandardMaterial({ map: canvasTex(512, 96, (c, w, h) => { c.fillStyle = '#c81e1e'; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 44px sans-serif'; c.textAlign = 'center'; c.fillText('CAv · EXTINTORES', w / 2, 64); }) }), 0, 1.45, -.4);
+  ['agua', 'espuma', 'po', 'co2', 'apc'].forEach((k, i) => { const e = cvExtintor(k); e.position.set(-1.1 + i * .5, .48, 0); g.add(e); }); const bk = cvExtintor('areia'); bk.position.set(1.25, .48, 0); g.add(bk); CAV.root.add(g); }
+// fita zebrada com cones (ao redor do fogo, raio 8 m)
+CAV.tape = new THREE.Group(); { const tex = canvasTex(256, 32, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.fillStyle = '#d42020'; for (let i = -2; i < 12; i++) { c.beginPath(); c.moveTo(i * 32, h); c.lineTo(i * 32 + 16, h); c.lineTo(i * 32 + 32, 0); c.lineTo(i * 32 + 16, 0); c.fill(); } }, { repeat: true });
+  const N = 10, R = 8, cone = M(0xff6a00, .6), stick = M(0xeeeeee); const pts = []; for (let i = 0; i < N; i++) { const a = i / N * 6.283; pts.push([Math.cos(a) * R, Math.sin(a) * R]); }
+  pts.forEach(([x, z]) => { part(CAV.tape, new THREE.CylinderGeometry(.03, .03, 1.05, 6), stick, x, .52, z); part(CAV.tape, new THREE.ConeGeometry(.22, .5, 12), cone, x, .25, z); });
+  CAV.tapes = []; for (let i = 0; i < N; i++) { const [x1, z1] = pts[i], [x2, z2] = pts[(i + 1) % N], L = Math.hypot(x2 - x1, z2 - z1), t = tex.clone(); t.needsUpdate = true; t.repeat.set(L / 1.2, 1);
+    const geo = new THREE.PlaneGeometry(L, .09, 12, 1), m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: t, side: THREE.DoubleSide })); m.position.set((x1 + x2) / 2, .95, (z1 + z2) / 2); m.rotation.y = -Math.atan2(z2 - z1, x2 - x1); CAV.tape.add(m); CAV.tapes.push({ m, base: geo.attributes.position.array.slice(), L, ph: i }); }
+  CAV.root.add(CAV.tape); }
+// placa do ponto de reunião
+CAV.meet = new THREE.Group(); { part(CAV.meet, new THREE.CylinderGeometry(.05, .05, 2.4, 8), M(0xdddddd), 0, 1.2, 0); part(CAV.meet, new THREE.PlaneGeometry(1.4, .9), new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map: canvasTex(256, 160, (c, w, h) => { c.fillStyle = '#1e8f3a'; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '900 34px sans-serif'; c.textAlign = 'center'; c.fillText('PONTO DE', w / 2, 64); c.fillText('REUNIÃO', w / 2, 108); }) }), 0, 2.1, 0);
+  const mk = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.6, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x2fc46a, transparent: true, opacity: .7 })); mk.position.y = .06; CAV.meet.add(mk); CAV.root.add(CAV.meet); }
+// lenha/caixotes para o fogo do prédio principal
+CAV.wood = new THREE.Group(); { const wood = M(0x3a2414, .9); for (let i = 0; i < 6; i++) part(CAV.wood, new THREE.BoxGeometry(1.4, .18, .18), wood, 0, .12 + (i % 2) * .16, 0).rotation.y = i * 1.05; part(CAV.wood, new THREE.BoxGeometry(.8, .5, .6), M(0x4a3020, .9), .5, .25, -.4).rotation.y = .4; CAV.root.add(CAV.wood); }
+
+// ---------- locais do fogo ----------
+const cvFree = (x, z, r = 1.2) => !blocked(x, z, r);
+function cvFreeNear(x, z, r0, r1, clear = 1.2, tries = 60) { for (let i = 0; i < tries; i++) { const a = Math.random() * 6.28, r = cvR(r0, r1), px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (cvFree(px, pz, clear)) return [px, pz]; } return [x, z]; }
+function cvWallSpot() { // primeira parede de prédio com chão livre em frente
+  for (const h of [MODERN[1], MODERN[0]].concat(HOUSES)) { const c = Math.cos(h[5]), s = Math.sin(h[5]);
+    for (const [lx, lz] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const nx = lx * c - lz * s, nz = lx * s + lz * c, half = (lx ? h[2] : h[3]) / 2, wx = h[0] + nx * half, wz = h[1] + nz * half;
+      if (cvFree(wx + nx * 2.5, wz + nz * 2.5, 1.5) && cvFree(wx + nx * 6, wz + nz * 6, 1.5)) return { x: wx, z: wz, nx, nz }; } } return { x: SPAWN[0], z: SPAWN[1] - 20, nx: 0, nz: 1 }; }
+function cvMainSpot() { for (let dz = 0; dz < 30; dz += 1) { const x = MAIN.cx + 20, z = MAIN.cz + 3.5 + (MAIN.d + 8) / 2 + 1 + dz; if (cvFree(x, z, 2)) return [x, z]; } return cvFreeNear(MAIN.cx, MAIN.cz + 30, 0, 20, 2); }
+const cvOffTrack = (x, z) => [[-4, -4], [4, -4], [-4, 4], [4, 4], [0, 0]].every(([a, b]) => !onTrack(x + a, z + b)) && !(x > LAWN.x0 - 14 && x < LAWN.x1 + 14 && z > LAWN.z0 - 14 && z < LAWN.z1 + 14);
+function cvFrySpot() { for (let i = 0; i < 300; i++) { const [x, z] = [MAIN.cx + cvR(-50, 50), MAIN.cz + 30 + cvR(0, 30)]; if (cvFree(x, z, 4.5) && cvOffTrack(x, z)) return [x, z]; }
+  for (let i = 0; i < 300; i++) { const [x, z] = cvFreeNear(SPAWN[0], SPAWN[1], 10, 60, 4.5, 1); if (cvFree(x, z, 4.5) && cvOffTrack(x, z)) return [x, z]; } return cvFreeNear(SPAWN[0], SPAWN[1], 10, 30, 4.5, 200); }
+const CV_SITES = [
+  { id: 'bin', nome: 'caçamba de lixo', classe: 'A', corte: false },
+  { id: 'main', nome: 'prédio principal', classe: 'A', corte: false },
+  { id: 'trac', nome: 'trator', classe: 'B', corte: false },
+  { id: 'qd', nome: 'quadro elétrico', classe: 'C', corte: true },
+  { id: 'fry', nome: 'fritadeira do rancho', classe: 'K', corte: true }];
+function cvPlaceSite(S) { // posiciona o fogo e os objetos do local sorteado
+  CAV.qd.visible = CAV.fry.visible = CAV.wood.visible = false; cvFire.r = 1; S.sw = null;
+  if (S.id === 'bin') { cvFire.o.set(BIN[0], Y0 + 1.62, BIN[1]); cvFire.r = 1.1; }
+  else if (S.id === 'main') { const [x, z] = cvMainSpot(); CAV.wood.visible = true; CAV.wood.position.set(x, Y0, z); cvFire.o.set(x, Y0 + .1, z); cvFire.r = .9; }
+  else if (S.id === 'trac') { cvFire.o.set(trac.position.x, Y0 + 1.3, trac.position.z); cvFire.r = .8; }
+  else if (S.id === 'qd') { const w = cvWallSpot(); CAV.qd.visible = true; CAV.qd.position.set(w.x, Y0, w.z); CAV.qd.rotation.y = Math.atan2(w.nx, w.nz); cvFire.o.set(w.x + w.nx * .3, Y0 + 1.4, w.z + w.nz * .3); cvFire.r = .3;
+    const tx = w.nz, tz = -w.nx; S.sw = [w.x + tx * 1.4 + w.nx * 1.2, w.z + tz * 1.4 + w.nz * 1.2]; }
+  else { const [x, z] = cvFrySpot(); CAV.fry.visible = true; CAV.fry.position.set(x, Y0, z); CAV.fry.rotation.y = 0; cvFire.o.set(x - .6, Y0 + 1.58, z + .9); cvFire.r = .35; S.sw = [x + 2.3, z + 2.6]; CAV.rectsOn.push([x, z + .9, 4.6, 1.4, 0]); }
+  S.x = cvFire.o.x; S.z = cvFire.o.z; for (const r of CAV.rectsOn) rects.push(r); }
+function cvSetEnergy(on) { CAV.energy = on; const q = CAV.qd.userData, f = CAV.fry.userData; q.lg.material.color.set(on ? 0x30ff60 : 0x113311); q.lr.material.color.set(on ? 0x441111 : 0xff3030); q.lever.rotation.x = on ? 0 : 1.2; f.lamp.material.color.set(on ? 0xff3030 : 0x331111); }
+
+// ---------- personagens (criados uma vez; só aparecem na fase 6) ----------
+for (let i = 0; i < 4; i++) { const g = human({ k: i % 2 ? 'mar1' : 'mar0' }); g.visible = false; scene.add(g); CAV.brig.push({ g, i, st: {}, busy: null, hurt: false, task: null, rig: null, jacc: 0, pulse: 0, v: 0 }); }
+for (const k of ['al0', 'ala0', 'al2']) { const g = human({ k }); g.visible = false; scene.add(g); CAV.crowd.push({ g, st: {}, home: null, v: 0 }); }
+CAV.victim = human({ k: 'al1' }); CAV.victim.visible = false; scene.add(CAV.victim); CAV.boss = human({ k: 'ten' }); CAV.boss.visible = false; scene.add(CAV.boss);
+function cvShowPeople(on) { for (const o of CAV.brig.map(b => b.g).concat(CAV.crowd.map(c => c.g), [CAV.victim, CAV.boss])) { o.visible = false; untag(o); o.rotation.set(0, 0, 0); } if (!on) return; }
+// extintor na mão: cilindro levantado na esquerda, mangueira até o esguicho na direita
+function cvRig(b, kind) { if (b.rig) { scene.remove(b.rig.g); b.rig.hose.geometry.dispose(); b.rig = null; } if (!kind) return;
+  const g = new THREE.Group(), ext = cvExtintor(kind), co2 = kind === 'co2', len = co2 ? .32 : .22; g.add(ext);
+  const noz = kind === 'areia' ? new THREE.Mesh(new THREE.BoxGeometry(.18, .04, .28), M(0x555555)) : co2 ? new THREE.Mesh(new THREE.ConeGeometry(.08, len, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x111111, side: THREE.DoubleSide })) : new THREE.Mesh(new THREE.CylinderGeometry(.018, .03, len, 10), new THREE.MeshStandardMaterial({ color: 0x222222, metalness: .5 }));
+  g.add(noz); const hose = new THREE.Mesh(new THREE.BufferGeometry(), cvBlack); if (kind !== 'areia') g.add(hose); scene.add(g); b.rig = { g, ext, noz, hose, len, co2, kind, from: new THREE.Vector3(), dir: new THREE.Vector3() }; }
+const cvA = new THREE.Vector3(), cvB = new THREE.Vector3(), cvQ = new THREE.Quaternion();
+function cvRigUpd(b) { const R = b.rig, u = b.g.userData; if (!R || !u.B) return; b.g.updateMatrixWorld(true);
+  const hl = u.B.haL.getWorldPosition(cvA), hr = u.B.haR.getWorldPosition(cvB), e = R.ext.userData;
+  R.ext.position.set(hl.x, hl.y - (e.h + e.r + .14), hl.z);
+  R.dir.set(0, 0, 1).applyQuaternion(b.g.getWorldQuaternion(cvQ)); R.dir.y = -.22; R.dir.normalize();
+  R.noz.quaternion.setFromUnitVectors(new THREE.Vector3(0, R.co2 ? -1 : 1, 0), R.dir); R.noz.position.copy(hr).addScaledVector(R.dir, R.len / 2); R.from.copy(hr).addScaledVector(R.dir, R.len);
+  if (R.kind !== 'areia') { const valve = new THREE.Vector3(hl.x, hl.y - .12, hl.z), mid = valve.clone().lerp(hr, .5); mid.y -= .35; R.hose.geometry.dispose(); R.hose.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([valve, mid, hr.clone()]), 16, .022, 6); } }
+function cvSprayPose(g) { const u = g.userData; u.shR.rotation.x = -1.4; u.elR.rotation.x = -.2; u.shL.rotation.x = -.35; u.elL.rotation.x = -1.9; }
+function cvKneel(g) { const u = g.userData; u.thL.rotation.x = u.thR.rotation.x = -1.5; u.knL.rotation.x = u.knR.rotation.x = 1.6; u.shR.rotation.x = u.shL.rotation.x = -.9; }
+function cvLie(g) { g.rotation.x = -Math.PI / 2; g.position.y = Y0 + .15; }
+
+// ---------- painel de escolhas (sobre a tela, sem pausar) ----------
+const cvPanelEl = document.createElement('div'); cvPanelEl.id = 'cavPanel';
+cvPanelEl.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40;max-width:min(560px,94vw);background:rgba(10,25,45,.93);color:#fff;border:1px solid #f3cf7a;border-radius:12px;padding:12px 14px;font:600 15px Montserrat,sans-serif;display:none;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+document.body.appendChild(cvPanelEl);
+function cavPanel(title, buttons) { cvPanelEl.innerHTML = ''; const h = document.createElement('div'); h.textContent = title; h.style.cssText = 'margin-bottom:8px;color:#f3cf7a'; cvPanelEl.appendChild(h);
+  const box = document.createElement('div'); box.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center'; cvPanelEl.appendChild(box);
+  for (const b of buttons) { const e = document.createElement('button'); e.type = 'button'; e.textContent = b.label; e.disabled = !!b.disabled; e.style.cssText = 'font:600 14px Montserrat,sans-serif;border:0;border-radius:8px;padding:9px 12px;background:#2c4a6b;color:#fff;cursor:pointer;min-width:52px'; e.onclick = ev => { ev.stopPropagation(); cavPanelClose(); b.fn(); }; box.appendChild(e); }
+  cvPanelEl.style.display = 'block'; }
+function cavPanelClose() { cvPanelEl.style.display = 'none'; cvPanelEl.innerHTML = ''; }
+
+// ---------- regras ----------
+const CV_RULE = { A: { agua: 'ok', espuma: 'ok' }, B: { espuma: 'ok', po: 'ok', co2: 'ok', agua: 'piora' }, C: { co2: 'ok', po: 'ok', agua: 'choque', espuma: 'choque' }, K: { apc: 'ok', agua: 'piora' } };
+function cavEffect(classe, agente) { return (CV_RULE[classe] || {})[agente] || 'nada'; }
+function cvErro() { CAV.erros++; beep(220, .25, 'square', .07); }
+
+// ---------- montar / desmontar a fase ----------
+function setupCav(on) {
+  CAV.on = on; CAV.cspd = 0; CAV.goal = null; cavPanelClose(); for (const k in CFX) CFX[k].clear(); cvFire.on = false; cvFire.k = 0; cvFire.light.intensity = 0;
+  for (const r of CAV.rectsOn) { const i = rects.indexOf(r); if (i >= 0) rects.splice(i, 1); } CAV.rectsOn = [];
+  for (const b of CAV.brig) { cvRig(b, null); b.busy = null; b.task = null; b.hurt = false; b.st = {}; }
+  cvShowPeople(false); CAV.root.visible = false; cvSetEnergy(true); cvSound(false);
+  if (!on) return;
+  CAV.site = Object.assign({}, CV_SITES[Math.floor(Math.random() * CV_SITES.length)]); if (window.__cavForce) CAV.site = Object.assign({}, CV_SITES.find(s => s.id === window.__cavForce));
+  Object.assign(CAV, { step: 'alarme', k: .3, erros: 0, cls: null, isolado: false, reuniao: false, socorrida: false, out: false, tOut: 0, reac: false, t: 0, hint: 0, parteT: 0, cst: {}, vGo: false, vst: null, spraying: false, caboOk: false, said: false, vLeave: null, vFin: null, vlt: 0 });
+  for (const b of CAV.brig) b.fin = null; for (const c of CAV.crowd) c.leave = null;
+  cvPlaceSite(CAV.site); const S = CAV.site; CAV.root.visible = true; CAV.tape.visible = false; CAV.cart.visible = false; CAV.meet.visible = true;
+  cvFire.on = true; cvFire.k = CAV.k; CAV.tape.position.set(S.x, Y0, S.z);
+  // ponto de reunião: primeiro ponto livre a 100 m ou mais do fogo
+  // ponto de reunião: primeiro ponto livre a 100 m ou mais do fogo
+  let best = null, bd = 1e9, far = null; for (const w of WP.concat([SPAWN], TRASHPTS)) { const d = Math.hypot(w[0] - S.x, w[1] - S.z); if (!cvFree(w[0], w[1], 2)) continue; if (d >= 100 && d < bd && los(S.x, S.z, w[0], w[1])) { bd = d; best = w; } if (!far || d > Math.hypot(far[0] - S.x, far[1] - S.z)) far = w; } best = best || far;
+  CAV.meetP = [best[0], best[1]]; CAV.meet.position.set(best[0], Y0, best[1]);
+  // carrinho, Encarregado, curiosos e vítima ao redor do fogo
+  const [cx, cz] = cvFreeNear(S.x, S.z, 10, 14, 1.8); CAV.cart.position.set(cx, Y0, cz); CAV.cart.rotation.y = Math.atan2(S.x - cx, S.z - cz) + Math.PI / 2; CAV.cartP = [cx, cz];
+  const [bx, bz] = cvFreeNear(S.x, S.z, 15, 20, 1.2); CAV.boss.position.set(bx, Y0, bz); CAV.boss.rotation.y = Math.atan2(S.x - bx, S.z - bz); CAV.boss.visible = true; tag(CAV.boss, 'Encarregado do CAv');
+  for (const c of CAV.crowd) { const [x, z] = cvFreeNear(S.x, S.z, 6, 9, .8); c.g.position.set(x, Y0, z); c.g.rotation.y = Math.atan2(S.x - x, S.z - z); c.g.visible = true; c.st = {}; c.going = false; c.there = false; c.t = 0; c.v = 0; }
+  CAV.hasVictim = Math.random() < .5 || window.__cavVictim === true; if (window.__cavVictim === false) CAV.hasVictim = false;
+  if (CAV.hasVictim) { const [x, z] = cvFreeNear(S.x, S.z, 3, 4, .6); CAV.victim.position.set(x, Y0, z); CAV.victim.visible = true; cvLie(CAV.victim); tag(CAV.victim, 'Vítima', .8); }
+  CAV.brig.forEach((b, i) => { const [x, z] = cvFreeNear(S.x, S.z, 22, 28, 1); b.g.position.set(x, Y0, z); b.g.visible = false; b.home = null; });
+  // alarme
+  // alarme
+  cvSound(true); cvSiren(); toast('Alarme de incêndio! Fogo: ' + S.nome); CAV.goal = { x: S.x, z: S.z, near: 5, then: cvArrive };
+}
+function cvArrive() { const S = CAV.site, P = cabo.position; yaw = Math.atan2(S.x - P.x, S.z - P.z); ptime = 0; CAV.step = 'classe'; CAV.cart.visible = true;
+  CAV.brig.forEach((b, i) => { b.g.visible = true; tag(b.g, 'Brigadista ' + (i + 1)); const a = i / 4 * 6.28 + .4; b.home = [S.x + Math.cos(a) * 5, S.z + Math.sin(a) * 5]; if (!cvFree(b.home[0], b.home[1], .6)) b.home = cvFreeNear(S.x, S.z, 4, 7, .6); });
+  cavPanel(`Fogo no ${S.nome}. Qual a classe do incêndio?`, ['A', 'B', 'C', 'K'].map(c => ({ label: 'Classe ' + c, fn: () => cvClasse(c) }))); }
+function cvClasse(c) { const S = CAV.site; CAV.cls = S.classe; CAV.step = 'comando';
+  if (c !== S.classe) { cvErro(); toast(`Errado: é classe ${S.classe}. O Encarregado corrigiu pelo rádio.`); talk(CAV.boss, `Negativo, Cabo! É classe ${S.classe}!`, 4); }
+  else { talk(cabo, `Incêndio classe ${S.classe} no ${S.nome}, Cabo Velho falando!`, 4.5); beep(880, .12, 'triangle'); }
+  toast('Toque num brigadista para dar ordens'); }
+// o Cabo anda sozinho até um ponto
+function caboGo(x, z, near, then) { CAV.goal = { x, z, near: near || 1.6, then }; }
+// quem empacar num obstáculo grande (piscina, prédio) passa a ir direto ao destino depois de um tempo
+function cvUnstick(o, tx, tz, t, lim) { if (t < lim) return false; const [x, z] = cvFree(tx, tz, .5) ? [tx, tz] : cvFreeNear(tx, tz, .5, 2.5, .5); o.position.x = x; o.position.z = z; return true; }
+
+// ---------- toque nos brigadistas ----------
+const cvDown = { x: 0, y: 0 };
+canvas.addEventListener('pointerdown', e => { cvDown.x = e.clientX; cvDown.y = e.clientY; });
+canvas.addEventListener('pointerup', e => { if (phase === 6 && state === 'play' && Math.hypot(e.clientX - cvDown.x, e.clientY - cvDown.y) < 8) cavTap(e.clientX, e.clientY); });
+function cavTap(sx, sy) { if (!CAV.on || CAV.step !== 'comando') return false; let best = null, bd = 70;
+  for (const b of CAV.brig) { if (!b.g.visible) continue; V3.copy(b.g.position); V3.y += 1.2; V3.project(camera); if (V3.z > 1) continue; const d = Math.hypot((V3.x * .5 + .5) * innerWidth - sx, (-V3.y * .5 + .5) * innerHeight - sy); if (d < bd) { bd = d; best = b; } }
+  if (!best) return false; const b = best, N = 'Brigadista ' + (b.i + 1);  if (b.hurt) { toast(N + ' ferido, fora de combate'); return true; }
+  if (b.busy) { cavPanel(`${N} · Ocupado: ${b.busy}`, [{ label: 'OK', fn: () => { } }]); return true; }
+  caboGo(b.g.position.x, b.g.position.z, 2.2, () => cvOrderMenu(b)); return true; }
+function cvOrderMenu(b) { if (b.busy || b.hurt || CAV.step !== 'comando') return; const L = [];
+  for (const k of ['agua', 'espuma', 'po', 'co2', 'apc']) L.push({ label: 'Extintor de ' + CV_NOME[k], fn: () => cavOrder(b, k) });
+  L.push({ label: 'Areia', fn: () => cavOrder(b, 'areia') }, { label: 'Cortar a energia', fn: () => cavOrder(b, 'energia') }, { label: 'Isolar a área', fn: () => cavOrder(b, 'isolar') }, { label: 'Pessoal ao ponto de reunião', fn: () => cavOrder(b, 'reuniao') });
+  if (CAV.hasVictim && !CAV.socorrida) L.push({ label: 'Primeiros socorros', fn: () => cavOrder(b, 'socorro') });
+  cavPanel(`Brigadista ${b.i + 1} · Qual a ordem?`, L); }
+const CV_FALA = { energia: ['Cortar a energia!', 'Cortando a energia!'], isolar: ['Isolar a área!', 'Isolando a área!'], reuniao: ['Pessoal ao ponto de reunião!', 'Levando o pessoal!'], socorro: ['Primeiros socorros na vítima!', 'Socorrendo a vítima!'] };
+function cavOrder(b, ordem) { const N = 'Brigadista ' + (b.i + 1); const ext = ordem in CV_JET;
+  talk(cabo, ext ? `${N}, guarnecer ${ordem === 'areia' ? 'areia' : 'extintor de ' + CV_NOME[ordem]}!` : `${N}, ${CV_FALA[ordem][0].toLowerCase()}`, 3);
+  setTimeout(() => talk(b.g, ext ? `Guarnecendo ${ordem === 'areia' ? 'areia' : 'extintor de ' + CV_NOME[ordem]}!` : CV_FALA[ordem][1], 2.6), 700);
+  if (ordem === 'energia' && !CAV.site.corte) { setTimeout(() => talk(b.g, 'Não tem energia aqui, Cabo!', 3), 1200); return; }
+  if (ordem === 'energia' && !CAV.energy) { setTimeout(() => talk(b.g, 'A energia já está cortada, Cabo!', 3), 1200); return; }
+  if (ordem === 'isolar' && CAV.isolado) { setTimeout(() => talk(b.g, 'A área já está isolada, Cabo!', 3), 1200); return; }
+  if (ordem === 'reuniao' && (CAV.reuniao || CAV.crowd.some(c => c.going))) { setTimeout(() => talk(b.g, 'O pessoal já está indo, Cabo!', 3), 1200); return; }
+  const S = CAV.site; b.busy = ext ? 'extintor de ' + CV_NOME[ordem] : CV_FALA[ordem][1].replace('!', '').toLowerCase(); b.task = { kind: ordem, ph: 'go', t: 0, ext, judged: false };
+  if (ext) b.task.tx = CAV.cartP[0], b.task.tz = CAV.cartP[1];
+  else if (ordem === 'energia') [b.task.tx, b.task.tz] = S.sw;
+  else if (ordem === 'isolar') { b.task.tx = S.x + 8; b.task.tz = S.z; if (!cvFree(b.task.tx, b.task.tz, .6)) [b.task.tx, b.task.tz] = cvFreeNear(S.x, S.z, 7, 9, .6); }
+  else if (ordem === 'reuniao') { const c = CAV.crowd[0].g.position; b.task.tx = c.x; b.task.tz = c.z; }
+  else { const v = CAV.victim.position; b.task.tx = v.x + .8; b.task.tz = v.z; } }
+// efeito do jato sobre o fogo, aplicado enquanto o brigadista solta o agente
+function cvApply(b, dt) { const S = CAV.site, eff = cavEffect(S.classe, b.task.kind), N = 'Brigadista ' + (b.i + 1);
+  if (!b.task.judged) { b.task.judged = true;
+    if (eff === 'piora') { CAV.k = Math.min(1, CAV.k + .25); cvErro(); talk(b.g, S.classe === 'K' ? 'Labareda! A água espalhou a gordura!' : 'O jato espalhou o combustível!', 3.5); toast('Agente errado: o fogo aumentou!'); b.task.t = 8; }
+    else if (eff === 'choque') { b.hurt = true; cvErro(); talk(b.g, 'Aaai! Choque!', 3); toast(`${N} levou choque e está fora de combate`); for (let i = 0; i < 40; i++) CFX.spark.add({ p: b.g.position.clone().add(new THREE.Vector3(0, 1.3, 0)), v: new THREE.Vector3(cvR(-3, 3), cvR(0, 4), cvR(-3, 3)), life: cvR(.2, .6), s0: .14, s1: .02, c0: cvC(1, 1, .8), c1: cvC(.4, .7, 1), a0: 1, a1: 0, grav: -9 }); cvTaskEnd(b); cvLie(b.g); return; }
+    else if (eff === 'nada') { cvErro(); talk(b.g, 'Não está adiantando, Cabo!', 3.5); } }
+  if (eff === 'ok') { const floor = S.corte && CAV.energy ? .25 : 0; if (CAV.k > floor) CAV.k = Math.max(floor, CAV.k - .07 * dt);
+    if (floor && CAV.k <= floor + .001 && !CAV.reac) { CAV.reac = true; cvErro(); talk(b.g, 'Está reacendendo! Precisa cortar a energia!', 4); toast('O fogo volta a acender enquanto houver energia'); } } }
+function cvTaskEnd(b) { cvRig(b, null); b.busy = null; b.task = null; }
+// isolar a área: quem não é brigadista nem o Cabo sai de perto (para fora da fita)
+function cvClearArea() { const S = CAV.site, away = o => { const a = Math.atan2(o.position.x - S.x, o.position.z - S.z), x = S.x + Math.sin(a) * 16, z = S.z + Math.cos(a) * 16; return cvFree(x, z, .6) ? [x, z] : cvFreeNear(S.x, S.z, 14, 19, .6); };
+  for (const c of CAV.crowd) if (!c.going) { c.leave = away(c.g); c.lt = 0; c.st = {}; } if (CAV.crowd[0] && !CAV.crowd[0].going) talk(CAV.crowd[0].g, 'Tá bom, tá bom, já estamos saindo!', 3);
+  if (CAV.hasVictim && CAV.socorrida && !CAV.vGo) { CAV.vLeave = away(CAV.victim); CAV.vlt = 0; } }
+// fogo extinto e pessoal no ponto de reunião: todos saem do local e vão ao Encarregado do CAv para o pronto da faina
+function cvPronto() { CAV.step = 'parte'; cavPanelClose(); const B = CAV.boss.position, S = CAV.site; let dx = S.x - B.x, dz = S.z - B.z; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l; const px = -dz, pz = dx;
+  let k = 0; for (const b of CAV.brig) { if (b.hurt) continue; cvTaskEnd(b); b.g.position.y = Y0; b.st = {}; b.ft = 0; b.fin = [B.x + dx * 2.6 + px * (k - 1.5) * 1.2, B.z + dz * 2.6 + pz * (k - 1.5) * 1.2]; k++; }
+  if (CAV.hasVictim && CAV.socorrida && !CAV.vGo) { CAV.vFin = [B.x + dx * 2 + px * 3.4, B.z + dz * 2 + pz * 3.4]; CAV.vlt = 0; }
+  CAV.boss.rotation.y = Math.atan2(dx, dz); toast('Fogo extinto! Todos ao Encarregado do CAv para o pronto da faina');
+  caboGo(B.x + dx * 1.4, B.z + dz * 1.4, .7, () => { CAV.caboOk = true; cabo.rotation.y = Math.atan2(-dx, -dz); }); }
+function cvUpdBrig(b, dt) { const T_ = b.task, g = b.g, S = CAV.site; let v = 0;
+  if (b.hurt) { animHuman(g, 0, dt); return; }
+  if (b.fin) { const d = Math.hypot(g.position.x - b.fin[0], g.position.z - b.fin[1]); if (d > .5 && !cvUnstick(g, b.fin[0], b.fin[1], b.ft += dt, 25)) v = walkTo(g, b.st, b.fin[0], b.fin[1], 6, dt, .45);
+    else { b.fin.ok = true; let da = Math.atan2(CAV.boss.position.x - g.position.x, CAV.boss.position.z - g.position.z) - g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); g.rotation.y += da * Math.min(1, dt * 5); }
+    b.v += (v - b.v) * Math.min(1, dt * 8); animHuman(g, b.v, dt); return; }
+  if (!T_) { if (b.home && Math.hypot(g.position.x - b.home[0], g.position.z - b.home[1]) > .8) v = walkTo(g, b.st, b.home[0], b.home[1], 6, dt, .45); else { let da = Math.atan2(S.x - g.position.x, S.z - g.position.z) - g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); g.rotation.y += da * Math.min(1, dt * 5); } b.v += (v - b.v) * Math.min(1, dt * 8); animHuman(g, b.v, dt); return; }
+  T_.t += dt; const d = Math.hypot(g.position.x - T_.tx, g.position.z - T_.tz);
+  if (T_.ph === 'go') { if (d > .9 && !cvUnstick(g, T_.tx, T_.tz, T_.t, 12)) v = walkTo(g, b.st, T_.tx, T_.tz, 7, dt, .45); else {
+      T_.t = 0; if (T_.ext) { T_.ph = 'carry'; cvRig(b, T_.kind); const a = Math.atan2(g.position.x - S.x, g.position.z - S.z); T_.tx = S.x + Math.sin(a) * 3; T_.tz = S.z + Math.cos(a) * 3; if (!cvFree(T_.tx, T_.tz, .5)) [T_.tx, T_.tz] = cvFreeNear(S.x, S.z, 2.6, 3.6, .5); }
+      else if (T_.kind === 'reuniao') { T_.ph = 'lead'; T_.tx = CAV.meetP[0]; T_.tz = CAV.meetP[1]; CAV.crowd.forEach(c => { c.going = true; c.st = {}; c.t = 0; }); if (CAV.socorrida) CAV.vGo = true; }
+      else T_.ph = 'work'; } }
+  else if (T_.ph === 'carry') { if (d > .7 && !cvUnstick(g, T_.tx, T_.tz, T_.t, 10)) v = walkTo(g, b.st, T_.tx, T_.tz, 6, dt, .45); else { T_.ph = 'spray'; T_.t = 0; b.jacc = 0; b.pulse = 0; } }
+  else if (T_.ph === 'spray') { let da = Math.atan2(S.x - g.position.x, S.z - g.position.z) - g.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); g.rotation.y += da * Math.min(1, dt * 6);
+    if (CAV.out || T_.t > 10) { cvTaskEnd(b); talk(g, CAV.out ? 'Fogo extinto!' : 'Extintor vazio!', 2.5); }
+    else { cvRigUpd(b); animHuman(g, 0, dt); cvSprayPose(g); if (b.rig) { const R = b.rig; R.dir.copy(cvA.set(S.x, cvFire.o.y + .2, S.z).sub(R.from).normalize()); if (cvJet(b, R.from, R.dir, dt)) { CAV.spraying = true; cvApply(b, dt); } } return; } }
+  else if (T_.ph === 'work') { const dur = { energia: 6, isolar: 3, socorro: 4 }[T_.kind] || 3;
+    if (T_.kind === 'socorro') { animHuman(g, 0, dt); cvKneel(g); g.position.y = Y0 - .35; } else { animHuman(g, 0, dt); g.userData.shR.rotation.x = -1.1 + Math.sin(T * 9) * .25; }
+    if (T_.t > dur) { g.position.y = Y0;
+      if (T_.kind === 'energia') { cvSetEnergy(false); talk(g, 'Energia cortada, Cabo!', 3); beep(330, .2, 'square', .06); }
+      else if (T_.kind === 'isolar') { CAV.isolado = true; CAV.tape.visible = true; talk(g, 'Área isolada! Afastem-se!', 3); cvClearArea(); }
+      else if (T_.kind === 'socorro') { CAV.socorrida = true; CAV.victim.rotation.set(0, 0, 0); CAV.victim.position.y = Y0; untag(CAV.victim); talk(CAV.victim, 'Obrigado... estou bem.', 3); talk(g, 'Vítima socorrida!', 3); if (CAV.crowd.some(c => c.going)) CAV.vGo = true; }
+      cvTaskEnd(b); } return; }
+  else if (T_.ph === 'lead') { if (d > 3 && !cvUnstick(g, T_.tx, T_.tz, T_.t, Math.hypot(CAV.meetP[0] - CAV.site.x, CAV.meetP[1] - CAV.site.z) / 4.5 * 1.6 + 6)) v = walkTo(g, b.st, T_.tx, T_.tz, 4.5, dt, .45); else { talk(g, 'Pessoal no ponto de reunião!', 3); cvTaskEnd(b); } }
+  if (T_ && b.rig) cvRigUpd(b); b.v += (v - b.v) * Math.min(1, dt * 8); animHuman(g, b.v, dt); if (b.rig) { const u = g.userData; u.shL.rotation.x = -.35; u.elL.rotation.x = -1.9; } }
+
+// ---------- sons gerados ----------
+const CVSND = { src: null, gain: null };
+function cvSound(on) { if (!audio) return; try { if (on && !CVSND.src) { const n = audio.sampleRate, buf = audio.createBuffer(1, n, n), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      CVSND.src = audio.createBufferSource(); CVSND.src.buffer = buf; CVSND.src.loop = true; const f = audio.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .7; CVSND.gain = audio.createGain(); CVSND.gain.gain.value = 0; CVSND.src.connect(f).connect(CVSND.gain).connect(audio.destination); CVSND.src.start(); }
+    else if (!on && CVSND.src) { CVSND.src.stop(); CVSND.src = null; CVSND.gain = null; } } catch (e) { } }
+function cvSiren() { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(), t0 = audio.currentTime; o.type = 'sawtooth'; g.gain.value = .05; for (let i = 0; i < 12; i++) o.frequency.setValueAtTime(i % 2 ? 950 : 650, t0 + i * .35); o.connect(g).connect(audio.destination); o.start(); o.stop(t0 + 4.2); } catch (e) { } }
+
+// ---------- laço da fase ----------
+function updCav(dt, P) { if (!CAV.on) return 0; const S = CAV.site; CAV.cspd = 0; CAV.spraying = false;
+  if (S.id === 'trac') cvFire.o.set(trac.position.x, Y0 + 1.3, trac.position.z), S.x = trac.position.x, S.z = trac.position.z;
+  // Cabo andando sozinho
+  if (CAV.goal) { const G = CAV.goal, sp = CAV.step === 'alarme' ? 14 : 8.6, d = Math.hypot(P.x - G.x, P.z - G.z); if (G.lim === undefined) { G.t = 0; G.lim = d / sp * 2 + 4; }
+    if (d > G.near && !cvUnstick(cabo, G.x - (G.x - P.x) / (d || 1) * G.near * .8, G.z - (G.z - P.z) / (d || 1) * G.near * .8, G.t += dt, G.lim)) CAV.cspd = walkTo(cabo, CAV.cst, G.x, G.z, sp, dt); else { CAV.goal = null; if (G.then) G.then(); } }
+  if (CAV.step === 'alarme') { ptime = 0; cvFireUpd(dt); for (const k in CFX) CFX[k].update(dt); for (const c of CAV.crowd) animHuman(c.g, 0, dt); animHuman(CAV.boss, 0, dt); return 1 - CAV.k; }
+  // fogo cresce sozinho até ser apagado
+  if (!CAV.out) { CAV.k = Math.min(1, CAV.k + .005 * dt); }
+  for (const b of CAV.brig) if (b.g.visible) cvUpdBrig(b, dt);
+  if (!CAV.out && CAV.k <= .03) { CAV.out = true; CAV.tOut = ptime; CAV.k = 0; cvFire.on = false; toast('Fogo extinto!'); beep(660, .15); setTimeout(() => beep(990, .3), 140); }
+  cvFire.k = CAV.k; cvFireUpd(dt);
+  // curiosos e vítima indo ao ponto de reunião
+  for (const c of CAV.crowd) { let v = 0; if (c.going) { const tx = CAV.meetP[0] + (CAV.crowd.indexOf(c) - 1) * 1.2, tz = CAV.meetP[1], d = Math.hypot(c.g.position.x - tx, c.g.position.z - tz); c.t = (c.t || 0) + dt;
+      if (d > 2.5 && !cvUnstick(c.g, tx, tz, c.t, Math.hypot(tx - CAV.site.x, tz - CAV.site.z) / 4.5 * 1.6 + 8)) v = walkTo(c.g, c.st, tx, tz, 4.5, dt, .45); else c.there = true; }
+    else if (c.leave) { const d = Math.hypot(c.g.position.x - c.leave[0], c.g.position.z - c.leave[1]); if (d > .8 && !cvUnstick(c.g, c.leave[0], c.leave[1], c.lt += dt, 20)) v = walkTo(c.g, c.st, c.leave[0], c.leave[1], 4, dt, .45); else c.leave = null; }
+    c.v += (v - c.v) * Math.min(1, dt * 8); animHuman(c.g, c.v, dt); }
+  if (CAV.hasVictim && CAV.socorrida && !CAV.vGo && (CAV.vFin || CAV.vLeave)) { const t = CAV.vFin || CAV.vLeave, d = Math.hypot(CAV.victim.position.x - t[0], CAV.victim.position.z - t[1]); let v = 0;
+    if (d > .8 && !cvUnstick(CAV.victim, t[0], t[1], CAV.vlt += dt, 25)) v = walkTo(CAV.victim, CAV.vst || (CAV.vst = {}), t[0], t[1], 3.5, dt, .45); else if (!CAV.vFin) CAV.vLeave = null; animHuman(CAV.victim, v, dt); }
+  else if (CAV.hasVictim && CAV.socorrida) { let v = 0; if (CAV.vGo) { const d = Math.hypot(CAV.victim.position.x - CAV.meetP[0], CAV.victim.position.z - CAV.meetP[1]); if (d > 2.5) v = walkTo(CAV.victim, CAV.vst || (CAV.vst = {}), CAV.meetP[0], CAV.meetP[1] + 1.5, 3, dt, .45); } animHuman(CAV.victim, v, dt); }
+  else if (CAV.hasVictim) animHuman(CAV.victim, 0, dt);
+  if (!CAV.reuniao && CAV.crowd.every(c => c.there)) { CAV.reuniao = true; toast('Pessoal conferido no ponto de reunião'); }
+  animHuman(CAV.boss, 0, dt);
+  // fita balançando
+  if (CAV.tape.visible) for (const t of CAV.tapes) { const a = t.m.geometry.attributes.position, bb = t.base; for (let i = 0; i < a.count; i++) { const u = bb[i * 3] / t.L + .5; a.array[i * 3 + 1] = bb[i * 3 + 1] - Math.sin(u * Math.PI) * .12; a.array[i * 3 + 2] = Math.sin(T * 3 + u * 6 + t.ph) * .03 * Math.sin(u * Math.PI); } a.needsUpdate = true; }
+  // faíscas no quadro energizado em chamas
+  if (S.id === 'qd' && CAV.energy && !CAV.out && Math.random() < dt * 30) CFX.spark.add({ p: cvFire.o.clone().add(new THREE.Vector3(cvR(-.4, .4), cvR(-.2, .5), 0)), v: new THREE.Vector3(cvR(-2, 2), cvR(0, 3), cvR(-2, 2)), life: cvR(.2, .5), s0: .12, s1: .02, c0: cvC(1, 1, .8), c1: cvC(1, .6, .1), a0: 1, a1: 0, grav: -9 });
+  // sons: chiado do extintor e estalo do fogo
+  if (CVSND.gain) CVSND.gain.gain.setTargetAtTime(CAV.spraying ? .06 : 0, audio.currentTime, .08);
+  if (!CAV.out && Math.hypot(P.x - S.x, P.z - S.z) < 40 && Math.random() < CAV.k * dt * 8) beep(1400 + Math.random() * 1600, .015, 'square', .025);
+  for (const k in CFX) CFX[k].update(dt);
+  // derrota: fogo no máximo
+  if (CAV.k >= 1 && !CAV.out) { CAV.step = 'falhou'; cavPanelClose(); cvSound(false); beep(160, .6, 'square', .12); say('Encarregado do CAv', 'O incêndio saiu do controle', 'O incêndio saiu do controle, Cabo. Os bombeiros assumiram.' + obj(6), 'Tentar de novo', () => startPhase(6)); return 1; }
+  // fim: fogo apagado e pessoal no ponto de reunião → parte ao Encarregado
+  if (CAV.out && !CAV.reuniao && (CAV.hint -= dt) <= 0) { CAV.hint = 8; toast('Fogo extinto! Leve o pessoal ao ponto de reunião'); }
+  if (CAV.out && CAV.reuniao && CAV.step === 'comando') cvPronto();
+  if (CAV.step === 'parte' && CAV.caboOk && CAV.brig.every(b => b.hurt || (b.fin && b.fin.ok))) { CAV.step = 'fim'; CAV.parteT = 5; CAV.said = false;
+    talk(cabo, 'Encarregado, fogo extinto e efetivo conferido. Faina encerrada, pronto!', 4.5); whistle(); }
+  if (CAV.step === 'fim' && !CAV.said && CAV.parteT < 2.4) { CAV.said = true; talk(CAV.boss, 'Muito bem, Cabo Velho! Pode desguarnecer.', 3); }
+  if (CAV.step === 'fim' && (CAV.parteT -= dt) <= 0) { CAV.step = 'done'; let st = CAV.tOut <= 75 && CAV.erros === 0 ? 3 : CAV.tOut <= 120 && CAV.erros <= 2 ? 2 : 1; if (!CAV.isolado) st--; if (CAV.hasVictim && !CAV.socorrida) st--; ptime = CAV.tOut; cvSound(false); nextPhase(Math.max(1, st)); }
+  return 1 - CAV.k; }
+function hudCav() { $('qname').textContent = `Missão ${slotOf(6) + 1} de ${ORDER.length} · Incêndio na Ilha`; if (!CAV.on) return;
+  $('qgoal').textContent = CAV.step === 'alarme' ? 'Alarme! Indo até o fogo…' : CAV.out ? (CAV.reuniao ? 'Dar o parte ao Encarregado' : 'Pessoal ao ponto de reunião') + ` · ${fmt(CAV.tOut)}` : `Classe ${CAV.cls || '?'} · fogo ${Math.round(CAV.k * 100)}% · ${fmt(ptime)}`;
+  $('meterLabel').textContent = 'Controle do fogo'; }
+function mapCav(g, P, T) { if (!CAV.on) return; const S = CAV.site, blink = f => Math.sin(T * f) > -.2, dot = (x, z, c, r) => { g.fillStyle = c; g.beginPath(); g.arc(mx(x), mz(z), r, 0, 7); g.fill(); };
+  if (!CAV.out && blink(5 + CAV.k * 12)) { dot(S.x, S.z, '#ff3b2b', 3.2 + CAV.k * 1.5); }
+  if (CAV.cart.visible && blink(4)) dot(CAV.cartP[0], CAV.cartP[1], '#ffd21f', 2.4);
+  if (blink(3.5)) { g.fillStyle = '#2fc46a'; g.fillRect(mx(CAV.meetP[0]) - 2.5, mz(CAV.meetP[1]) - 2.5, 5, 5); }
+  if (S.sw && CAV.energy && CAV.step !== 'alarme' && blink(6)) dot(S.sw[0], S.sw[1], '#ff8a2b', 2.2);
+  for (const b of CAV.brig) if (b.g.visible && !b.hurt && blink(5)) dot(b.g.position.x, b.g.position.z, b.busy ? '#3fc46a' : '#ffffff', 1.9);
+  if (CAV.hasVictim && !CAV.socorrida && blink(7)) dot(CAV.victim.position.x, CAV.victim.position.z, '#ff7ad9', 2.2);
+  if ((CAV.step === 'parte' || CAV.step === 'fim' || (CAV.out && CAV.reuniao)) && blink(4)) dot(CAV.boss.position.x, CAV.boss.position.z, '#4fa3ff', 2.6); }
+window.__cav = { CAV, setupCav, startPhase, CFX, CV_SITES, cavEffect, cavTap, cavOrder, cvFire, camera, dpr: renderer.getPixelRatio(), get hiss() { return CVSND.gain ? CVSND.gain.gain.value : 0; }, get rects() { return rects; } };
 
 const camPos = new THREE.Vector3(20, 9, 75), camTgt = new THREE.Vector3(20, 5, 62), dummy = new THREE.Object3D(), V3 = new THREE.Vector3();
 let T = 0, last = performance.now(), toastT = 0;
@@ -1149,13 +1493,14 @@ function step(dt) {
   const P = cabo.position; let speed = 0, meter = 0, good = true; nearPk = 1e9;
   if (state === 'play') {
     let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, iy = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y;
-    let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0) l = 0; ptime += dt; gameT += dt; const onTrk = onTrack(P.x, P.z);
+    let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0 || phase === 6) l = 0; ptime += dt; gameT += dt; const onTrk = onTrack(P.x, P.z);
     if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && (!tired || boost > 0 || onTrk); const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? (onTrk ? 14 : 8.6) : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
     const k = Math.min(1, dt * 9); vel.x += (tx - vel.x) * k; vel.z += (tz - vel.z) * k;
     const moved = vel.lengthSq() > 0.01 && tryMove(cabo, vel.x * dt, vel.z * dt); if (!moved) vel.multiplyScalar(0.6); speed = moved ? vel.length() : 0;
     if (speed > 0.4) { let d = Math.atan2(vel.x, vel.z) - cabo.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); cabo.rotation.y += d * Math.min(1, dt * 10); }
     stamina = Math.min(maxSt(), Math.max(0, stamina + (boost > 0 || onTrk ? 25 : running && speed > 5 ? -19 : speed > 0.4 ? 9 : 16) * dt)); if (stamina <= 0) tired = true; else if (stamina > 30) tired = false; if (boost > 0) { boost -= dt; tired = false; } if (running && onTrk && speed > 6) { if ((tafT += dt) >= 5 && !tafS) { tafS = true; taf(); } } else { tafT = 0; tafS = false; }
     if (phase === 5) { meter = updPortalo(dt, P); good = ptime < PTDUR - 45; }
+    else if (phase === 6) { meter = updCav(dt, P); speed = CAV.cspd; }
     else if (phase < 4) {
       let near = 1e9; const flee = 3.6 + phase * 0.75;
       for (const p of peacocks) { const u = p.userData, dx = p.position.x - P.x, dz = p.position.z - P.z, d = Math.hypot(dx, dz); near = Math.min(near, d); nearPk = near;
