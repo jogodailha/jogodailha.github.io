@@ -21,6 +21,7 @@ section{background:var(--card);border:1px solid var(--line);border-radius:12px;p
 .chart .c{flex:1;display:flex;gap:1px;align-items:flex-end;height:100%;min-width:0}.chart .c i{flex:1;background:var(--a);border-radius:3px 3px 0 0;min-height:1px}.chart .c i+i{background:var(--b)}
 .axis{display:flex;gap:3px;font-size:10px;color:var(--mut);margin-top:3px}.axis span{flex:1;text-align:center;min-width:0;overflow:hidden}
 .leg{font-size:12px;color:var(--mut);margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px;vertical-align:middle}
+#tbTop td:nth-child(2){text-align:left}#tbTop tr.ouro td{color:var(--gold);font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:600}
 .note{color:var(--mut);font-size:12px;margin-top:8px}.err{color:#ff8a7a}
 </style></head><body><main>
@@ -52,6 +53,8 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;
 <section><h2>Horário dos acessos</h2><div class="chart" id="chHora"></div><div class="axis" id="axHora"></div></section>
 <section><h2>Dia a dia</h2><div style="overflow-x:auto"><table id="tb"><thead><tr><th>Dia</th><th>Acessos</th><th>Aparelhos</th><th>Minutos</th><th>Terminaram o jogo</th><th>Enviaram ao ranking</th></tr></thead><tbody></tbody></table></div>
   <div class="note">Tudo o que existe gravado, desde o primeiro dia. "Acessos", "Minutos" e "Terminaram o jogo" começaram a ser contados em <span id="ini">–</span>; "Aparelhos" desde 13/11/2026; "Enviaram ao ranking" desde o lançamento do ranking (11/11/2026). Antes disso nada foi gravado.</div></section>
+<section><h2>Top 10 · maiores pontuações</h2><div style="overflow-x:auto"><table id="tbTop"><thead><tr><th>Posição</th><th style="text-align:left">Nome</th><th>Pontos</th><th>Data</th></tr></thead><tbody><tr><td colspan="4">Carregando…</td></tr></tbody></table></div>
+  <div class="note">Os mesmos 10 que aparecem dentro do jogo, do maior para o menor.</div></section>
 <div class="note" id="msg"></div>
 </main>
 <script type="module">
@@ -63,7 +66,7 @@ const MISS = [['m1', '1 · Honras de portaló'], ['m2', '2 · Incêndio na Ilha'
 const DUR = [['1', '1 minuto ou mais'], ['5', '5 minutos ou mais'], ['10', '10 minutos ou mais'], ['20', '20 minutos ou mais'], ['30', '30 minutos ou mais']];
 const hoje = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 const dBR = s => s.slice(8, 10) + '/' + s.slice(5, 7);
-let EST = {}, VIS = {}, RK = {}, per = 7;
+let EST = {}, VIS = {}, RK = {}, TOP = null, per = 7;
 function lista(el, obj, opt = {}) { const it = Object.entries(obj || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, opt.max || 12), mx = Math.max(1, ...it.map(x => x[1]));
   $(el).innerHTML = it.length ? it.map(([k, v]) => `<div class="row ${opt.mar && /marinha/i.test(k) ? 'mar' : ''}"><span class="nm" title="${esc(k)}">${esc(k)}</span><span class="bar"><i style="width:${(100 * v / mx).toFixed(1)}%"></i></span><span class="v">${fmt(v)}</span></div>`).join('') : '<div class="note">Sem dados no período.</div>'; }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -86,11 +89,13 @@ function desenhar() {
   $('chHora').innerHTML = hs.map(x => `<div class="c" title="${x}h: ${fmt(s.hora[x])} acessos"><i style="height:${100 * (s.hora[x] || 0) / hm}%"></i></div>`).join(''); $('axHora').innerHTML = hs.map(x => `<span>${+x % 3 === 0 ? x + 'h' : ''}</span>`).join('');
   // tabela
   const todos = diasDe(0).reverse(); $('tb').tBodies[0].innerHTML = todos.map(d => { const e = EST[d] || {}; return `<tr><td>${dBR(d)}/${d.slice(0, 4)}</td><td>${e.acessos != null ? fmt(e.acessos) : '–'}</td><td>${VIS[d] != null ? fmt(VIS[d]) : '–'}</td><td>${e.tempo != null ? fmt(e.tempo) : '–'}</td><td>${e.miss ? fmt(e.miss.fim) : '–'}</td><td>${RK[d] != null ? fmt(RK[d]) : '–'}</td></tr>`; }).join('');
+  if (TOP) $('tbTop').tBodies[0].innerHTML = TOP.length ? TOP.map((e, i) => `<tr class="${i < 3 ? 'ouro' : ''}"><td>${['🥇', '🥈', '🥉'][i] || (i + 1) + 'º'}</td><td>${esc(e.nome)}</td><td>${fmt(e.pontos)}</td><td>${e.t ? e.t.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '–'}</td></tr>`).join('') : '<tr><td colspan="4">Ninguém enviou pontos ainda.</td></tr>';
   const ini = Object.keys(EST).sort()[0]; $('ini').textContent = ini ? dBR(ini) + '/' + ini.slice(0, 4) : 'a próxima publicação do jogo';
   $('upd').textContent = 'atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (atualiza sozinho a cada minuto)'; }
 async function carregar() { // cada coleção é lida separada: se uma falhar, as outras aparecem mesmo assim
   const [a, b, c, k] = await Promise.allSettled([fs.getDocs(fs.collection(db, 'estat')), fs.getDocs(fs.collection(db, 'visitas')), fs.getDocs(fs.collection(db, 'online')), fs.getDocs(fs.collection(db, 'ranking'))]), erros = [];
-  if (k.status === 'fulfilled') { RK = {}; k.value.forEach(d => { const t = d.data().data; if (!t) return; const dia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(t.toDate()); RK[dia] = (RK[dia] || 0) + 1; }); }
+  if (k.status === 'fulfilled') { RK = {}; k.value.forEach(d => { const t = d.data().data; if (!t) return; const dia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(t.toDate()); RK[dia] = (RK[dia] || 0) + 1; });
+    TOP = []; k.value.forEach(d => { const r = d.data(); if (typeof r.nome === 'string' && Number.isFinite(r.pontos)) TOP.push({ nome: r.nome.slice(0, 16), pontos: Math.round(r.pontos), t: r.data ? r.data.toDate() : null }); }); TOP.sort((x, y) => y.pontos - x.pontos); TOP = TOP.slice(0, 10); } else erros.push('ranking');
   if (a.status === 'fulfilled') { EST = {}; a.value.forEach(d => EST[d.id] = d.data()); } else erros.push('acessos e detalhes');
   if (b.status === 'fulfilled') { VIS = {}; b.value.forEach(d => VIS[d.id] = d.data().n || 0); } else erros.push('aparelhos');
   if (c.status === 'fulfilled') { const agora = Date.now(); let on = 0; c.value.forEach(d => { const t = d.data().t; if (t && agora - t.toMillis() < 60000) on++; }); $('cOn').textContent = fmt(on); } else erros.push('jogando agora');
