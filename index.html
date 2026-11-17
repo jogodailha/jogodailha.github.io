@@ -54,7 +54,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #cbtn{font:800 15px var(--body);letter-spacing:.06em;background:var(--gold);color:var(--ink);border:0;border-radius:8px;padding:12px 24px;cursor:pointer;float:right}
 #cbtn::after{content:" \25B8"}
 #cbtn:focus-visible{outline:3px solid #fff;outline-offset:3px}#cbtn:hover{filter:brightness(1.08)}
-@media (max-width:560px){#meter{left:16px;transform:none;bottom:16px;width:38vw}#qgoal{font-size:13px}}
+@media (max-width:560px){#meter{left:16px;transform:none;bottom:16px;width:38vw}#tl{left:8px;top:8px;width:47vw;gap:6px}#tl .panel{padding:7px 10px}#char .nm{font-size:15px}#lvl{font-size:10px;white-space:nowrap}#questp{right:8px;top:8px;max-width:44vw;padding:7px 10px}#qname{font-size:9px;letter-spacing:.06em}#qgoal{font-size:12px;margin-top:2px}#onl{padding:6px 10px;font-size:10px}}
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="tl"><div class="panel" id="char"><div class="nm">Cabo Velho <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div><b id="stn" style="font-size:13px;letter-spacing:.04em;min-width:62px;text-align:right;font-variant-numeric:tabular-nums">100</b></div><div class="row"><span>Pontos</span><b id="pts" style="font-size:13px;letter-spacing:.04em">0</b></div><div id="buffs"></div></div>
@@ -3274,9 +3274,10 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
 
     // ---- modelo do sinal: quanto mais perto do eixo, mais perto de zero (−56 dBm no ponto ótimo)
     const SN = { az: -5, el: 3, ruido: 0 };   // passos fora do eixo: azimute 1,5° por passo, elevação 1° por passo
-    const dbm = () => { const a = SN.az * 1.5, e = SN.el; return Math.max(-95, -56 - .409 * a * a - .889 * e * e + SN.ruido); };
+    const pico = () => SN.az === 0 && (SN.el === 0 || SN.el === 3);
+    const dbm = () => { const a = SN.az * 1.5, e = SN.el, b = -56 - .409 * a * a - .889 * e * e; if (pico()) return b; return Math.max(-95, Math.min(SN.az !== 0 ? -65 : -57, b + SN.ruido)); };   // fora do ponto certo, nunca melhor que o pico
     const ccq = d => Math.max(0, Math.min(98, Math.round(15 + (d + 87) / 31 * 83)));
-    const somDe = d => d > -58 ? 3 : d > -66 ? 2 : d > -78 ? 1 : 0;   // 0 sem som, 1 lento, 2 rápido, 3 contínuo
+    const somDe = d => SN.az === 0 && SN.el === 0 ? 3 : SN.az === 0 && SN.el === 3 ? 2 : d > -80 ? 1 : 0;   // 0 sem som, 1 lento, 2 rápido (só no −64 exato), 3 contínuo (só no −56 exato)
     const SOMTXT = ['*sem som*', '*bip lento*', '*BIP RÁPIDO*', '*BIIIIIP CONTÍNUO DE ALINHAMENTO*'];
     let bipT = 0, tom = null; function bipe(dt, ativo) { if (!audio) return; const s = ativo ? somDe(dbm()) : 0;
       if (s === 3) { if (!tom) { try { const o = audio.createOscillator(), g = audio.createGain(); o.type = 'square'; o.frequency.value = 1760; g.gain.value = .22; o.connect(g).connect(audio.destination); o.start(); tom = { o, g }; } catch (e) {} } return; }
@@ -3345,7 +3346,7 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
       #enl button.op{display:block;width:100%;text-align:left;font:700 clamp(14px,2vw,16px) var(--body);background:#22324a;color:#fff;border:2px solid #3b5a85;border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer}
       #enl button.op:hover{border-color:#f3cf7a}#enl button.op code{font-size:.95em;color:#9fe6ff}
       #enl button.go{font:900 17px var(--body);background:#f3cf7a;color:#0b1730;border:0;border-radius:10px;padding:11px 24px;cursor:pointer}
-      #enl .fone{position:absolute;right:max(14px,3vw);top:50%;transform:translateY(-50%);width:min(300px,42vw);display:none;background:#0d1117;border:10px solid #222;border-radius:30px;box-shadow:0 12px 40px rgba(0,0,0,.6);padding:14px 14px 18px;font-family:Arial,sans-serif}
+      #enl .fone{position:absolute;right:max(14px,3vw);top:42%;transform:translateY(-50%);width:min(300px,42vw);display:none;background:#0d1117;border:10px solid #222;border-radius:30px;box-shadow:0 12px 40px rgba(0,0,0,.6);padding:14px 14px 18px;font-family:Arial,sans-serif}
       #enl .fone .tp{font:800 13px Arial;color:#9aa4b2;display:flex;justify-content:space-between;margin-bottom:6px}#enl .fone .ap{font:800 15px Arial;color:#2db9ff;margin-bottom:8px}
       #enl .fone .db{font:900 54px/1 Arial;text-align:center;margin:6px 0 2px}#enl .fone .dbl{text-align:center;font:700 12px Arial;color:#9aa4b2;margin-bottom:8px}
       #enl .fone .bar{height:14px;background:#222a35;border-radius:7px;overflow:hidden}#enl .fone .bar i{display:block;height:100%;border-radius:7px;transition:width .25s}
@@ -3365,8 +3366,10 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
       #enl .term{background:#000;color:#cfe8cf;font:500 clamp(11px,1.6vw,14px)/1.45 Consolas,monospace;border-radius:6px;padding:10px 12px;min-height:180px;white-space:pre-wrap;word-break:break-all}
       #enl .term .pr{color:#59db8f}#enl .erro{background:#3a0d0d;border:2px solid #e53935;color:#ffb4b4;border-radius:8px;padding:10px 12px;margin:8px 0;font:700 14px Arial}
       #enl .certo{background:#0d3a1d;border:2px solid #3ddc84;color:#b9ffd2;border-radius:8px;padding:10px 12px;margin:8px 0;font:700 14px Arial}
-      @media (max-width:700px){#enl .fone{top:auto;bottom:10px;transform:none;right:8px;width:50vw;padding:8px 9px;border-width:6px;border-radius:20px}#enl .fone .db{font-size:34px}#enl .fone table{font-size:12px;margin-top:6px}#enl .fone .ap{font-size:12px}#enl .fone .dbl{font-size:10px}#enl .setas{bottom:12px;left:8px;width:44vw;gap:8px}#enl .setas button{width:64px;height:64px;font-size:26px}#enl .setas .ok{font-size:13px;padding:10px 8px}#enl .setas .dica{font-size:12px}}
-      body.enl-alinha #mapp,body.enl-alinha #meter{display:none}`;
+      @media (max-width:700px){#enl .fone{top:86px;bottom:auto;transform:none;right:8px;width:46vw;padding:6px 8px 8px;border-width:5px;border-radius:18px}#enl .fone .tp{font-size:10px;margin-bottom:2px}#enl .fone .ap{font-size:11px;margin-bottom:2px}#enl .fone .db{font-size:30px;margin:2px 0 0}#enl .fone .dbl{font-size:9px;margin-bottom:4px}#enl .fone .bar{height:9px}#enl .fone table{font-size:11px;margin-top:4px}#enl .fone td{padding:1px 0}#enl .fone .som{font-size:11px;margin-top:4px;min-height:0}
+        #enl .setas{bottom:12px;left:8px;right:8px;width:auto;gap:8px;align-items:center}#enl .setas button{width:62px;height:62px;font-size:25px}#enl .setas .ok{flex:1;font-size:14px;padding:12px 8px}#enl .setas .dica{font-size:12px}
+        #enl .leg{bottom:10px;width:calc(100vw - 16px);padding:10px 12px}#enl .leg button.op{padding:9px 10px;font-size:13px}}
+      body.enl-alinha #mapp,body.enl-alinha #meter,body.enl-alinha #onl{display:none!important}`;
     document.head.appendChild(est);
     const ov = document.createElement('div'); ov.id = 'enl';
     ov.innerHTML = `<div class="leg"></div>
@@ -3425,7 +3428,7 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
       andarPor([SL(-1.2, .04, 1.2), SL(-1.2, 0, 2.6), new THREE.Vector3(-2.2, Y0, 4.2), fora(0, .95).setY(Y0)], () => { EN.etapa = 'sobe'; EN.pose = 'sobe'; EN.sobe = 0; legenda('Subindo pela <b>escada externa</b> da torre…'); }); }
     function chegouTopo() { EN.etapa = 'afrouxa'; EN.t = 0; EN.pose = 'antena'; LEG.style.display = 'none'; const p = fora(YP, 1.25, .1); cabo.position.set(...WL(p).setY(YPISO).toArray()); cabo.rotation.y = Math.atan2(DP.x - p.x, DP.z - p.z);
       legenda('Na plataforma a 24 m, sem obstruções na visada. O Cabo <b>afrouxa levemente os parafusos</b> para a antena girar com leveza…'); for (let i = 0; i < 6; i++) setTimeout(() => { if (EN.etapa === 'afrouxa') { EN.aperta = .4; brilhaParaf(i); beep(1500, .02, 'square', .05); } }, 300 + i * 330); }
-    function conecta() { EN.etapa = 'conecta'; EN.t = 0; LEG.style.display = 'none'; FONE.style.display = 'block'; pintaFone(false); }
+    function conecta() { document.body.classList.add('enl-alinha'); EN.etapa = 'conecta'; EN.t = 0; LEG.style.display = 'none'; FONE.style.display = 'block'; pintaFone(false); }
     function setas(tipo) { EN.etapa = tipo; document.body.classList.add('enl-alinha'); const h = tipo === 'azimute';
       SETAS.innerHTML = `<div class="dica">${h ? 'AZIMUTE (horizontal): toque nas setas para girar a antena' : 'ELEVAÇÃO (vertical): incline a antena'}</div>` + (h ? '<button data-d="-1">◀</button><button data-d="1">▶</button>' : '<button data-d="1">▲</button><button data-d="-1">▼</button>') + `<button class="ok">${h ? 'Pico achado – apertar de leve' : 'Bipe contínuo – travar'}</button>`;
       SETAS.style.display = 'flex'; SETAS.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => mexe(h, +b.dataset.d)); SETAS.querySelector('.ok').onclick = () => confirma(h); }
@@ -3513,7 +3516,7 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
           if (e === 'sobe' && EN.sobe >= 1) chegouTopo(); if (e === 'desce' && EN.sobe <= 0) { EN.pose = ''; P.y = Y0; irSala(); } return .3; }
         if (e === 'afrouxa') { if (EN.t > 2.8) conecta(); return .35; }
         if (e === 'conecta') { SN.ruido = (Math.random() - .5) * 1.2; if (EN.t > 1.8) { pintaFone(true); setas('azimute'); } else pintaFone(false); return .35; }
-        if (e === 'azimute' || e === 'elevacao' || e === 'trava') { SN.ruido += ((Math.random() - .5) * 1.1 - SN.ruido) * Math.min(1, dt * 4); pintaFone(true); bipe(dt, true); return .4 + .2 * (1 - Math.min(1, -dbm() / 95)); }
+        if (e === 'azimute' || e === 'elevacao' || e === 'trava') { EN.oscT = (EN.oscT || 0) - dt; if (EN.oscT <= 0) { EN.oscT = .35 + Math.random() * .3; SN.ruido = Math.round((Math.random() - .5) * 5); } pintaFone(true); bipe(dt, true); return .4 + .2 * (1 - Math.min(1, -dbm() / 95)); }
         if (e === 'senta') { EN.sit = Math.min(1, EN.t / .6); const c = WL(SL(.5, .04, -.62)); P.set(c.x, Y0 - .43 * EN.sit, c.z); cabo.rotation.y = Math.PI + .2; if (EN.t > 1.6 && !EN.abriu) { EN.abriu = 1; pareamento(); } return .55; }
         if (e === 'pc' || e === 'final') { const c = WL(SL(.5, .04, -.62)); P.set(c.x, Y0 - .43, c.z); cabo.rotation.y = Math.PI + .2; if (e === 'final' && EN.t > 3.6) { EN.etapa = 'levantaCabo'; EN.t = 0; } return e === 'final' ? 1 : .7; }
         if (e === 'levantaCabo') { EN.sit = Math.max(0, 1 - EN.t / .6); const c = WL(SL(.5, .04, -.62)), alvo = WL(SL(-1.25, .04, .35));
