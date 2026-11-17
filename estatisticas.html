@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:right;
 <div class="grid">
   <section><h2>Onde estão (cidade aproximada)</h2><div id="lCid"></div><div class="note">Pela conexão de internet, sem pedir nada ao jogador. Com dados do celular a cidade pode sair a da operadora.</div></section>
   <section><h2>Rede de internet</h2><div id="lRede"></div><div class="note">Em verde, redes da Marinha (provável acesso de dentro de uma OM).</div></section>
-  <section><h2>Até onde chegaram</h2><div id="lMiss"></div><div class="note">Quantos acessos começaram cada missão. A porcentagem é sobre quem começou a Missão 1. A ordem das missões mudou duas vezes (Apagão em 15/11/2026 e Instrução de Tiro depois); em dias anteriores a mesma posição pode ser outra missão.</div></section>
+  <section><h2>Até onde chegaram</h2><div id="lMiss"></div><div class="note">Quantos acessos começaram cada missão. A porcentagem é sobre quem começou a Missão 1. A ordem das missões mudou algumas vezes (Apagão e Instrução de Tiro em 15/11/2026, Enlace da Antena em 16/11/2026); em dias anteriores a mesma posição pode ser outra missão.</div></section>
   <section><h2>Quanto tempo jogaram</h2><div id="lDur"></div><div class="note">Acessos que ficaram com o jogo aberto por pelo menos esse tempo.</div></section>
   <section><h2>Tipo de aparelho</h2><div id="lDev"></div></section>
   <section><h2>Sistema</h2><div id="lSo"></div></section>
@@ -62,7 +62,7 @@ const V = '10.12.2', base = `https://www.gstatic.com/firebasejs/${V}/`;
 const [{ initializeApp }, fs] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
 const db = fs.getFirestore(initializeApp({ projectId: 'jogodailhaplacar', authDomain: 'jogodailhaplacar.firebaseapp.com' }));
 const $ = id => document.getElementById(id), fmt = n => Number(n || 0).toLocaleString('pt-BR');
-const MISS = [['m1', '1 · Honras de portaló'], ['m2', '2 · Incêndio na Ilha'], ['m3', '3 · Apagão na Ilha'], ['m4', '4 · Instrução de Tiro'], ['m5', '5 · Pavões à solta'], ['m6', '6 · Faxina na ilha'], ['m7', '7 · Reforma da pista'], ['m8', '8 · Goleiro da pelada'], ['m9', '9 · Ronda do Almirante'], ['fim', 'Terminaram o jogo']];
+const MISS = [['m1', '1 · Honras de portaló'], ['m2', '2 · Incêndio na Ilha'], ['m3', '3 · Enlace da Antena'], ['m4', '4 · Apagão na Ilha'], ['m5', '5 · Instrução de Tiro'], ['m6', '6 · Pavões à solta'], ['m7', '7 · Faxina na ilha'], ['m8', '8 · Reforma da pista'], ['m9', '9 · Goleiro da pelada'], ['m10', '10 · Ronda do Almirante'], ['fim', 'Terminaram o jogo']];
 const DUR = [['1', '1 minuto ou mais'], ['5', '5 minutos ou mais'], ['10', '10 minutos ou mais'], ['20', '20 minutos ou mais'], ['30', '30 minutos ou mais']];
 const hoje = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 const dBR = s => s.slice(8, 10) + '/' + s.slice(5, 7);

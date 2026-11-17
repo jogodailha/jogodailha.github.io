@@ -549,7 +549,7 @@ let peacocks = [], phase = 5, state = 'menu', found = 0, total = 5, survive = 0,
 let xp = 0, lvl = 1, stamina = 100, tired = false, boost = 0, ptime = 0, spots = 0, nearPk = 1e9, tafT = 0, tafS = false, focus = 0, gameT = 0, score = 0; const vel = new THREE.Vector3(); const xpNeed = () => 80 + lvl * 60, maxSt = () => 100 + (lvl - 1) * 12 + fit * 6, gastoSt = () => 12 / (1 + 0.15 * fit), lvlMax = () => Math.min(ORDER.length + 1, slotOf(phase) + 2); let andado = 0, fit = 0, voltaAng = 0, voltaUlt = null, voltas = 0;
 function melhoraFolego(n, msg) { fit += n; stamina = maxSt(); tired = false; toast(`${msg} (preparo físico ${fit})`); beep(698, 0.1); setTimeout(() => beep(880, 0.2), 110); }
 const PH = [5, 0, 0, 0], SURV = 75;
-const ORDER = [5, 6, 7, 8, 0, 1, 2, 3, 4], slotOf = p => Math.max(0, ORDER.indexOf(p));
+const ORDER = [5, 6, 9, 7, 8, 0, 1, 2, 3, 4], slotOf = p => Math.max(0, ORDER.indexOf(p));
 function beep(f, d = 0.12, type = 'sine', v = 0.15) { if (!audio) return; try { const o = audio.createOscillator(), g = audio.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + d); o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + d); } catch (e) {} }
 function gainXP(n) { xp += n; while (lvl < lvlMax() && xp >= xpNeed()) { xp -= xpNeed(); lvl++; stamina = maxSt(); toast(`Subiu para o nível ${lvl}! Mais fôlego.`); beep(784, 0.12); setTimeout(() => beep(1047, 0.3), 120); } }
 function hideSpot() { for (let k = 0; k < 3000; k++) { const x = -225 + Math.random() * 465, z = -90 + Math.random() * 180; if (blocked(x, z, 1.2)) continue; if (Math.hypot(x - cabo.position.x, z - cabo.position.z) < 45) continue; if (peacocks.some(p => Math.hypot(x - p.position.x, z - p.position.z) < 35)) continue;
@@ -566,6 +566,7 @@ function hud() {
   if (phase === 6) return hudCav();
   if (phase === 7 && window.__apagao) return window.__apagao.hud();
   if (phase === 8 && window.__tiro) return window.__tiro.hud();
+  if (phase === 9 && window.__enl) return window.__enl.hud();
   const NM = `Missão ${slotOf(phase) + 1} de ${ORDER.length}`;
   $('qname').textContent = phase < 4 ? `${NM} · Pavões à solta` : phase === 5 ? `${NM} · Honras de portaló` : `${NM} · A ronda do Almirante`;
   $('qgoal').textContent = phase < 4 ? `Recolher os pavões: ${found} de ${total}` : phase === 5 ? '' : `Não ser visto por ${Math.ceil(Math.max(0, survive))} s`; if (phase < 4) $('qgoal').textContent += ` · ${fmt(ptime)}`;
@@ -579,7 +580,7 @@ function nextPhase(stOverride) {
   const s = slotOf(phase), n = ORDER[s + 1], st0 = stOverride || (ptime <= T3[phase] ? 3 : ptime <= T2[phase] ? 2 : 1), sr = starsFor(phase, st0, ptime); score += 1000 + st0 * 500 + Math.max(0, Math.round((300 - ptime) * 2)); hud(); gainXP(60 + slotOf(phase) * 20); beep(660, 0.15); setTimeout(() => beep(880, 0.25), 140); quest.visible = true;
   const rkSo = `<div class="rank"><h2>Top 10 da ilha</h2><table id="rk"><tbody><tr><td colspan="3">Carregando…</td></tr></tbody></table><div id="rkmsg"></div><div style="font-size:13px;opacity:.8;margin-top:4px">Seu nome ou apelido entra no ranking quando você terminar a última missão.</div></div>`;
   // 1º a tela de missão cumprida com o Top 10; 2º a tela com as instruções da próxima missão
-  const NOMES = { 0: 'Pavões à solta', 1: 'Faxina na ilha', 2: 'Reforma da pista', 3: 'Goleiro da pelada', 4: 'A ronda do Almirante', 5: 'Honras de portaló', 6: 'Incêndio na Ilha', 7: 'Apagão na Ilha', 8: 'Instrução de Tiro' };
+  const NOMES = { 0: 'Pavões à solta', 1: 'Faxina na ilha', 2: 'Reforma da pista', 3: 'Goleiro da pelada', 4: 'A ronda do Almirante', 5: 'Honras de portaló', 6: 'Incêndio na Ilha', 7: 'Apagão na Ilha', 8: 'Instrução de Tiro', 9: 'Enlace da Antena' };
   const FINAL = `Cabo Velho, más notícias: o Almirante saiu para a ronda e você está fora do posto. Fique <b>${SURV} segundos</b> sem ser pego.<br><br>O cone amarelo mostra para onde ele olha. Prédios bloqueiam a visão dele, e debaixo das árvores ele só enxerga de perto. Ele aparece em vermelho no minimapa.`;
   const instrucoes = () => say('Sargento', n === 4 ? `Missão final (${ORDER.length} de ${ORDER.length}) · ${NOMES[4]}` : `Missão ${slotOf(n) + 1} de ${ORDER.length} · ${NOMES[n]}`, `${n === 4 ? FINAL : BRIEF[n]}${obj(n)}`, n === 4 ? 'Encarar' : 'Começar missão', () => startPhase(n));
   say('Sargento', `Missão ${s + 1} cumprida`, `${sr}${rkSo}`, 'Ver a próxima missão', instrucoes, 'win'); carregarRanking();
@@ -710,7 +711,7 @@ function vehiclePush(P) { for (const [o, r] of [[trac.position, 1.7], [trail.pos
 window.__x = { ofc, O, birds, trac, TP, TR };
 
 // ================= EXTRAS 2: stars/records, golden stars, ferry, hugging sergeant, troop, painters, ambient sound =================
-const T3 = [150, 150, 150, 90, 0, 90, 75, 120, 120], T2 = [240, 240, 240, 150, 0, 150, 120, 210, 210], fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+const T3 = [150, 150, 150, 90, 0, 90, 75, 120, 120, 300], T2 = [240, 240, 240, 150, 0, 150, 120, 210, 210, 480], fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 let REC = {}; try { REC = JSON.parse(localStorage.getItem('pavoes_rec') || '{}'); } catch (e) {}
 function starsFor(n, st, time) { const r = REC[n] || {}; let rec = ''; if (time != null) { if (r.t == null || time < r.t) { rec = r.t == null ? ' · primeiro recorde!' : ' · novo recorde!'; r.t = Math.round(time); } else rec = ` · recorde ${fmt(r.t)}`; } r.s = Math.max(r.s || 0, st); REC[n] = r; try { localStorage.setItem('pavoes_rec', JSON.stringify(REC)); } catch (e) {}
   return `<span class="stars">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span> ${time != null ? 'Tempo ' + fmt(time) + rec : (spots ? `Visto ${spots} vez${spots > 1 ? 'es' : ''}` : 'Nunca foi visto') + ` · melhor: ${r.s} estrela${r.s > 1 ? 's' : ''}`}<br><br>`; }
@@ -854,7 +855,7 @@ function trackPt(d) { const cx = 97.5, cz = 15, hx = 59.25, hz = 43.75, r = 26.7
   if (d < sx) return [cx - sx / 2 + d, cz - hz]; d -= sx; if (d < q) return arc(cx + sx / 2, cz - sz / 2, -Math.PI / 2, d); d -= q; if (d < sz) return [cx + hx, cz - sz / 2 + d]; d -= sz; if (d < q) return arc(cx + sx / 2, cz + sz / 2, 0, d); d -= q;
   if (d < sx) return [cx + sx / 2 - d, cz + hz]; d -= sx; if (d < q) return arc(cx - sx / 2, cz + sz / 2, Math.PI / 2, d); d -= q; if (d < sz) return [cx - hx, cz + sz / 2 - d]; d -= sz; return arc(cx - sx / 2, cz - sz / 2, Math.PI, d); }
 const holeM = new THREE.MeshBasicMaterial({ color: 0x15100c, transparent: true, opacity: 0.92, depthWrite: false }), wornM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false }), bagM = M(0x1c1c1e, 0.4), junk = [M(0xc9b28a), M(0xd94a2b), M(0x3aa0e8), M(0xf2f2f2)];
-function setupMission(n) { MS.trash.concat(MS.spots).forEach(o => scene.remove(o)); MS.trash = []; MS.spots = []; MS.got = MS.fixed = MS.n = 0; MS.roller = false; roller.visible = bag.visible = false; setupSoccer(n === 3); setupPortalo(n === 5); setupCav(n === 6); if (window.__apagao) window.__apagao.setup(n === 7); if (window.__tiro) window.__tiro.setup(n === 8);
+function setupMission(n) { MS.trash.concat(MS.spots).forEach(o => scene.remove(o)); MS.trash = []; MS.spots = []; MS.got = MS.fixed = MS.n = 0; MS.roller = false; roller.visible = bag.visible = false; setupSoccer(n === 3); setupPortalo(n === 5); setupCav(n === 6); if (window.__apagao) window.__apagao.setup(n === 7); if (window.__tiro) window.__tiro.setup(n === 8); if (window.__enl) window.__enl.setup(n === 9);
   if (n === 1) { const pts = TRASHPTS.filter(p => !blocked(p[0], p[1], 1)).sort(() => Math.random() - 0.5).slice(0, 4); for (const [x, z] of pts) { const g = new THREE.Group(); g.position.set(x, Y0, z); part(g, new THREE.SphereGeometry(0.42, 10, 8), bagM, 0, 0.36, 0).scale.set(1, 0.9, 1); part(g, new THREE.SphereGeometry(0.32, 10, 8), bagM, 0.5, 0.28, 0.25); for (let i = 0; i < 7; i++) { const b = part(g, new THREE.BoxGeometry(0.2 + Math.random() * 0.25, 0.12 + Math.random() * 0.2, 0.2 + Math.random() * 0.2), junk[i % 4], Math.random() * 1.6 - 0.8, 0.1, Math.random() * 1.6 - 0.8); b.rotation.set(Math.random(), Math.random() * 3, Math.random()); } scene.add(g); MS.trash.push(g); } }
   if (n === 2) { MS.n = 5 + Math.floor(Math.random() * 6); const off = Math.random() * 366; for (let i = 0; i < MS.n; i++) { const [x, z] = trackPt(off + (i + Math.random() * 0.5) * 366 / MS.n), g = new THREE.Group(); g.position.set(x + Math.random() * 3 - 1.5, Y0 + 0.05, z + Math.random() * 3 - 1.5); const w = new THREE.Mesh(new THREE.CircleGeometry(3.4, 9).rotateX(-Math.PI / 2), wornM); w.scale.set(1, 1, 0.6); w.rotation.y = Math.random() * 3; g.add(w); for (let k = 0; k < 3; k++) { const h = new THREE.Mesh(new THREE.CircleGeometry(0.5 + Math.random() * 0.6, 7).rotateX(-Math.PI / 2), holeM); h.position.set(Math.random() * 2.4 - 1.2, 0.02, Math.random() * 1.6 - 0.8); g.add(h); } scene.add(g); MS.spots.push(g); } } }
 function updMission(dt, P) { if (phase === 3) return updSoccer(dt, P); let near = 1e9; const dist = o => Math.hypot(P.x - o.position.x, P.z - o.position.z);
@@ -894,7 +895,7 @@ function drawMap4(g, P, T) { const dot = (o, c, r = 2.2) => { g.fillStyle = c; g
   g.fillStyle = '#f7f4ec'; g.fillRect(mx(CHP[0]) - 2, mz(CHP[1]) - 2, 4, 4); g.fillStyle = '#1f4e9c'; for (const q of guards) g.fillRect(mx(q.x) - 1.5, mz(q.z) - 1.5, 3, 3);
   if (phase === 1) { for (const t of MS.trash) if (Math.hypot(t.position.x - P.x, t.position.z - P.z) < R) dot(t, '#8a5a2b', 2.6); g.fillStyle = '#2e7d32'; const s = MS.got >= 4 ? 3 + Math.sin(T * 6) : 2; g.fillRect(mx(BIN[0]) - s, mz(BIN[1]) - s, s * 2, s * 2); }
   if (phase === 2) { if (MS.roller) for (const t of MS.spots) dot(t, '#ff8a2b', 2); else if (Math.hypot(mestre.position.x - P.x, mestre.position.z - P.z) < R * 1.5) dot(mestre, '#c77dff', 2.8 + Math.sin(T * 6) * 0.6); }
-  if (phase === 3 && SC.on) { dot(SC.ball, '#ffffff', 2.4); g.strokeStyle = '#ffd21f'; g.lineWidth = 1.5; g.strokeRect(mx(GLX) - 2.5, mz(GZc) - 3, 3, 6); } if (phase === 5) mapPortalo(g, P, T); if (phase === 6) mapCav(g, P, T); if (phase === 7 && window.__apagao) window.__apagao.map(g, P, T); if (phase === 8 && window.__tiro) window.__tiro.map(g, P, T);
+  if (phase === 3 && SC.on) { dot(SC.ball, '#ffffff', 2.4); g.strokeStyle = '#ffd21f'; g.lineWidth = 1.5; g.strokeRect(mx(GLX) - 2.5, mz(GZc) - 3, 3, 6); } if (phase === 5) mapPortalo(g, P, T); if (phase === 6) mapCav(g, P, T); if (phase === 7 && window.__apagao) window.__apagao.map(g, P, T); if (phase === 8 && window.__tiro) window.__tiro.map(g, P, T); if (phase === 9 && window.__enl) window.__enl.map(g, P, T);
   if (chap.visible) dot(chap, '#ffffff', 2.2); dot(sailor, '#7fd6ff', 1.8); }
 window.__x4 = { CH, chap, MS, mestre, sailor, guards, CV, CVS, trackPt, setGameT: v => gameT = v, setFocus: v => focus = v };
 
@@ -1528,7 +1529,7 @@ function step(dt) {
   const P = cabo.position; let speed = 0, meter = 0, good = true; nearPk = 1e9;
   if (state === 'play') {
     let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, iy = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y;
-    let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0 || phase === 6 || phase === 8) l = 0; ptime += dt; gameT += dt; const onTrk = onTrack(P.x, P.z);
+    let l = Math.hypot(ix, iy), tx = 0, tz = 0, running = false; const jm = Math.hypot(joy.x, joy.y); if (H.lock > 0 || phase === 6 || phase === 8 || phase === 9) l = 0; ptime += dt; gameT += dt; const onTrk = onTrack(P.x, P.z);
     if (l > 0.12) { if (l > 1) { ix /= l; iy /= l; l = 1; } running = (keys.ShiftLeft || keys.ShiftRight || jm > 0.93) && (!tired || boost > 0 || onTrk); const fx = Math.sin(yaw), fz = Math.cos(yaw), sp = running ? (onTrk ? 14 : 8.6) : 4.4 * Math.max(0.45, l); const n = Math.hypot(ix, iy); tx = (fx * iy - fz * ix) / n * sp; tz = (fz * iy + fx * ix) / n * sp; }
     const k = Math.min(1, dt * 9); vel.x += (tx - vel.x) * k; vel.z += (tz - vel.z) * k;
     const moved = vel.lengthSq() > 0.01 && tryMove(cabo, vel.x * dt, vel.z * dt); if (!moved) vel.multiplyScalar(0.6); speed = moved ? vel.length() : 0;
@@ -1542,6 +1543,7 @@ function step(dt) {
     else if (phase === 6) { meter = updCav(dt, P); speed = CAV.cspd; }
     else if (phase === 7 && window.__apagao) { meter = window.__apagao.upd(dt, P); }
     else if (phase === 8 && window.__tiro) { meter = window.__tiro.upd(dt, P); speed = window.__tiro.spd; }
+    else if (phase === 9 && window.__enl) { meter = window.__enl.upd(dt, P); speed = window.__enl.spd; }
     else if (phase < 4) {
       let near = 1e9; const flee = 3.6 + phase * 0.75;
       for (const p of peacocks) { const u = p.userData, dx = p.position.x - P.x, dz = p.position.z - P.z, d = Math.hypot(dx, dz); near = Math.min(near, d); nearPk = near;
@@ -2131,7 +2133,7 @@ let faseSinal = 0; const desenhaTela = (g, w, h) => {
   const mad = M(0x8a5a32, { roughness: .6 }), preto = M(0x1b1b1b);
   box(1.8, .05, .8, M(0xd9d4c8), .5, .76, -DS / 2 + .6, S); for (const [dx, dz] of [[-.8, -.3], [.8, -.3], [-.8, .3], [.8, .3]]) box(.05, .74, .05, mad, .5 + dx, .37, -DS / 2 + .6 + dz, S);
   box(.6, .36, .04, preto, .5, 1.12, -DS / 2 + .4, S); box(.08, .18, .08, M(0x5a5f66), .5, .87, -DS / 2 + .42, S); box(.3, .02, .2, preto, .5, .79, -DS / 2 + .42, S);
-  const t1 = new THREE.Mesh(new THREE.PlaneGeometry(.56, .32), new THREE.MeshBasicMaterial({ map: telaPC })); t1.position.set(.5, 1.12, -DS / 2 + .425); S.add(t1);
+  const t1 = new THREE.Mesh(new THREE.PlaneGeometry(.56, .32), new THREE.MeshBasicMaterial({ map: telaPC })); t1.position.set(.5, 1.12, -DS / 2 + .425); S.add(t1); t1.userData.manter = true; AMP.monAntena = t1;
   box(.48, .02, .16, M(0x2a2a2a), .5, .79, -DS / 2 + .78, S); box(.07, .02, .1, M(0x2a2a2a), .85, .79, -DS / 2 + .78, S);
   box(.2, .42, .42, preto, -.25, .99, -DS / 2 + .55, S);                         // gabinete do computador
   const C = new THREE.Group(); C.position.set(.5, 0, -DS / 2 + 1.35); C.rotation.y = .2; S.add(C); window.__cadeira = C; C.userData.manter = true;
@@ -2155,7 +2157,7 @@ let faseSinal = 0; const desenhaTela = (g, w, h) => {
     window.__vapor = now => { copoG.getWorldPosition(o); R.worldToLocal(o); vap.forEach((sp, k) => { const u = ((now / 2600) + k / vap.length) % 1; sp.position.set(o.x + Math.sin(u * 7 + k) * .02 * u, o.y + .05 + u * .32, o.z + Math.cos(u * 5 + k) * .015 * u); const s = .03 + u * .09; sp.scale.set(s, s, 1); sp.material.opacity = Math.sin(u * Math.PI) * .55; }); }; }
   // monitor de 100 polegadas na parede do fundo, mostrando a tela do computador
   box(2.3, 1.34, .06, preto, .5, 1.95, -DS / 2 + PT + .03, S);
-  const t2 = new THREE.Mesh(new THREE.PlaneGeometry(2.21, 1.25), new THREE.MeshBasicMaterial({ map: telaPC })); t2.position.set(.5, 1.95, -DS / 2 + PT + .065); S.add(t2);
+  const t2 = new THREE.Mesh(new THREE.PlaneGeometry(2.21, 1.25), new THREE.MeshBasicMaterial({ map: telaPC })); t2.position.set(.5, 1.95, -DS / 2 + PT + .065); S.add(t2); t2.userData.manter = true; AMP.tvAntena = t2; AMP.telaPCAntena = telaPC;
   // placa de perigo ao lado da entrada
   const t = tex(512, 256, (g, w, h) => { g.fillStyle = '#ffd400'; g.fillRect(0, 0, w, h); g.fillStyle = '#111'; g.beginPath(); g.moveTo(70, 50); g.lineTo(130, 170); g.lineTo(10, 170); g.closePath(); g.fill(); g.fillStyle = '#ffd400'; g.font = '900 90px system-ui'; g.textAlign = 'center'; g.fillText('!', 70, 158);
     g.fillStyle = '#111'; g.textAlign = 'left'; g.font = '900 46px system-ui'; g.fillText('PERIGO', 160, 90); g.font = '700 30px system-ui'; g.fillText('ÁREA DE RADIAÇÃO', 160, 140); g.fillText('ACESSO RESTRITO', 160, 180); });
@@ -2193,7 +2195,8 @@ for (const s of [-1, 1]) box(.4, MH + .3, .4, muroM, s * 1.7, Y0 + (MH + .3) / 2
     const mx = new THREE.AnimationMixer(m), clip = n => gl.animations.find(c => c.name === n);
     const aIdle = mx.clipAction(clip('idle')), aWalk = mx.clipAction(clip('walk')); aIdle.play(); aWalk.play(); aWalk.weight = 0;
     // estado
-    let fase = 'sentado', t = 0, rota = null, ri = 0, sent = 1, beber = 0, segura = 0, comCopo = false, olhar = Math.PI + .2;
+    let fase = 'sentado', t = 0, rota = null, ri = 0, sent = 1, beber = 0, segura = 0, comCopo = false, olhar = Math.PI + .2, emMissao = false, cafeVolta = false;
+    const fone = new THREE.Mesh(new THREE.BoxGeometry(.035, .14, .015), M(0x111111)); fone.visible = false; scene.add(fone);
     m.position.copy(CADEIRA); m.rotation.y = olhar;
     const SENTADO = 24, FORA = 14;
     const anda = r => { rota = r; ri = 0; fase = 'andando'; };
@@ -2206,11 +2209,19 @@ for (const s of [-1, 1]) box(.4, MH + .3, .4, muroM, s * 1.7, Y0 + (MH + .3) / 2
     window.__npc = { m, get fase() { return fase; } };
     window.__sargento = dt => {
       t += dt;
+      const sm = window.__sgtMissao;
+      if (sm) { if (!emMissao) { emMissao = true; if (comCopo) largaCopo(); sent = 0; beber = 0; segura = 0; if (cadeira()) cadeira().position.z = -2 + 1.35 + .35; }
+        m.position.copy(sm.pos); let df = sm.olhar - m.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); m.rotation.y += df * Math.min(1, dt * 6);
+        aWalk.weight = 0; aIdle.weight = 1; mx.update(dt); m.updateMatrixWorld(true); ax.set(1, 0, 0).applyQuaternion(m.quaternion); az.set(0, 0, 1).applyQuaternion(m.quaternion);
+        fone.visible = !!sm.fone; if (sm.fone) { gira(B('R UpperArm'), ax, -.55); gira(B('R UpperArm'), az, -.5); gira(B('R Forearm'), ax, -2.3); gira(B('Head'), az, -.12);
+          const h = B('R Hand'); if (h) { h.getWorldPosition(mao); R.worldToLocal(mao); fone.position.copy(mao); fone.quaternion.copy(m.quaternion); fone.rotateZ(.4); } }
+        return; }
+      if (emMissao) { emMissao = false; fone.visible = false; if (window.__sgtCafe) { window.__sgtCafe = false; cafeVolta = true; anda(IDA_CAFE); prox = 'pegando'; } else { anda(DA_CAFE_CADEIRA); prox = 'sentar'; } }
       // máquina de estados da rotina
       if (fase === 'sentado' && t > SENTADO) { fase = 'levantando'; t = 0; }
       else if (fase === 'levantando') { sent = Math.max(0, 1 - t); if (cadeira()) cadeira().position.z = -2 + 1.35 + .35 * (1 - sent); if (sent === 0) { anda(IDA_CAFE); prox = 'pegando'; } }
-      else if (fase === 'pegando') { olhar = Math.PI; segura = Math.min(1, t / .8); if (t > .8 && !comCopo) pegaCopo(); if (t > 1.2) { fase = 'bebendo'; t = 0; prox = 'irFora'; } }
-      else if (fase === 'bebendo') { beber = t < 1 ? t : t < 2.6 ? 1 : Math.max(0, 1 - (t - 2.6)); if (t > 3.6) { beber = 0; if (prox === 'irFora') { anda(IDA_FORA); prox = 'fora'; } else if (prox === 'foraDeNovo') { fase = 'fora'; t = 0; prox = 'voltar'; } } }
+      else if (fase === 'pegando') { olhar = Math.PI; segura = Math.min(1, t / .8); if (t > .8 && !comCopo) pegaCopo(); if (t > 1.2) { fase = 'bebendo'; t = 0; prox = cafeVolta ? 'voltaCadeira' : 'irFora'; } }
+      else if (fase === 'bebendo') { beber = t < 1 ? t : t < 2.6 ? 1 : Math.max(0, 1 - (t - 2.6)); if (t > 3.6) { beber = 0; if (prox === 'irFora') { anda(IDA_FORA); prox = 'fora'; } else if (prox === 'foraDeNovo') { fase = 'fora'; t = 0; prox = 'voltar'; } else if (prox === 'voltaCadeira') { cafeVolta = false; fase = 'largando'; t = 0; } } }
       else if (fase === 'fora') { olhar = Math.PI + .15; if (t > FORA * .4 && prox === 'fora') { fase = 'bebendo'; t = 0; prox = 'foraDeNovo'; } else if (t > FORA * .6 && prox === 'voltar') { anda(VOLTA); prox = 'largar'; } }
       else if (fase === 'largando') { olhar = Math.PI; segura = Math.max(0, 1 - t / .8); if (t > .6 && comCopo) largaCopo(); if (t > 1) { anda(DA_CAFE_CADEIRA); prox = 'sentar'; } }
       else if (fase === 'sentando') { olhar = Math.PI + .2; sent = Math.min(1, t); if (cadeira()) cadeira().position.z = -2 + 1.35 + .35 * (1 - sent); if (sent === 1) { fase = 'sentado'; t = 0; } }
@@ -3231,6 +3242,297 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
   // ---------------- atalho de teste (só no computador local): http://localhost:8080/?teste=tiro abre direto a missão de tiro
   if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && new URLSearchParams(location.search).get('teste') === 'tiro')
     say('Sargento', 'Teste · Instrução de Tiro', BRIEF[8] + obj(8), 'Começar o teste', () => startPhase(8));
+  // ================================================================ MISSÃO NOVA · ENLACE DA ANTENA (fase 9, 3ª da sequência)
+  // Alerta no abrigo (Zabbix vermelho na TV de 100", sargento ao telefone) → sobe a escada da torre → alinha a antena PTP pelo app
+  // do celular (azimute e elevação até o bipe contínuo) → trava → desce, senta no PC → pareamento, SNMP, terminal, template, host → mapa verde.
+  { const RA = AMP.antena, H = 32, B0 = 4.2, B1 = .9, lado = y => B0 + (B1 - B0) * (y / H);
+    const canto = (k, y) => { const r = lado(y) / Math.sqrt(3), a = k * Math.PI * 2 / 3 + Math.PI / 2; return new THREE.Vector3(Math.cos(a) * r, Y0 + .25 + y, Math.sin(a) * r); };
+    const meio = y => canto(0, y).lerp(canto(1, y), .5), NV = meio(0).setY(0).normalize(), TG = canto(1, 0).sub(canto(0, 0)).setY(0).normalize();
+    const fora = (y, off, s = 0) => { const m = meio(y); return new THREE.Vector3(m.x + NV.x * off + TG.x * s, m.y, m.z + NV.z * off + TG.z * s); };
+    const WL = v => RA.localToWorld(v.clone()), SL = (x, y, z) => new THREE.Vector3(3.8 + x, Y0 + y, 3.2 + z);   // SL: coordenadas dentro do abrigo
+    const YP = 24, YPISO = Y0 + .25 + YP + .07;
+    BRIEF[9] = 'Incêndio controlado, Cabo Velho! Agora o problema é na comunicação: <b>o enlace de rádio da ilha com o continente caiu</b> e o monitoramento está todo vermelho. A missão começa no abrigo da <b>Antena de Comunicação</b>.';
+    OBJ[9] = 'suba na torre e <b>alinhe a antena</b> olhando o celular: use as setas até o sinal (dBm) chegar o mais perto de zero e o <b>bipe ficar contínuo</b>. Depois, no computador do abrigo, reconfigure o rádio, o SNMP e o Zabbix até o mapa da TV ficar <b>verde</b>. Escolha errada mostra o erro e deixa corrigir, mas tira estrela.';
+
+    // ---- plataforma de trabalho e antena PTP (na face da escada, a 24 m)
+    const PL = new THREE.Group(); RA.add(PL); { const k = kit(PL), grade = M(0x6d737a, { metalness: .5 }), amar = M(0xf2c230, { roughness: .5 });
+      const c = fora(YP, 1.15); const g = new THREE.Group(); g.position.set(c.x, Y0 + .25 + YP, c.z); g.rotation.y = Math.atan2(TG.x, TG.z); PL.add(g); const kg = kit(g);
+      kg.box(.08, .06, 2.2, grade, 0, .03, 0); kg.box(1.3, .06, 2.2, grade, 0, .03, 0);                                   // piso em grade
+      for (const s of [-1, 1]) { kg.box(1.3, .04, .04, amar, 0, 1.05, s * 1.08); kg.box(1.3, .04, .04, amar, 0, .55, s * 1.08); kg.box(.04, 1.05, .04, amar, .63, .53, s * 1.08); }   // guarda-corpo
+      kg.box(.04, .04, 2.2, amar, .63, 1.05, 0); kg.box(.04, .04, 2.2, amar, .63, .55, 0); }
+    const DP = fora(YP, 1.5, .78); DP.y = YPISO;   // pé do mastro da antena
+    const ANT = new THREE.Group(); ANT.position.set(DP.x, YPISO + 1.25, DP.z); RA.add(ANT); ANT.userData.manter = true;
+    const AZ0 = Math.atan2(NV.x, NV.z) + .5, AZG = new THREE.Group(), ELG = new THREE.Group(); ANT.add(AZG); AZG.add(ELG); AZG.rotation.y = AZ0;
+    { const k = kit(ELG), br = M(0xf0f0ee, { roughness: .45 }), cz = M(0x8d949b, { metalness: .5, roughness: .4 }), pr = M(0x1d1f22);
+      const prato = new THREE.Mesh(new THREE.SphereGeometry(.62, 28, 10, 0, Math.PI * 2, 0, .5), M(0xe9e9e6, { side: THREE.DoubleSide, roughness: .5 })); prato.rotation.x = Math.PI / 2; prato.position.z = .3; prato.scale.z = .55; ELG.add(prato);
+      k.cyl(.05, .07, .32, br, 0, 0, .45).rotation.x = Math.PI / 2; k.box(.2, .26, .14, br, 0, -.02, -.02);   // alimentador e rádio atrás do prato
+      for (const a of [0, 2.1, 4.2]) { const s = k.cyl(.008, .008, .5, cz, Math.cos(a) * .2, Math.sin(a) * .2, .32); s.rotation.x = Math.PI / 2; }
+      k.box(.16, .16, .06, cz, 0, 0, -.12); }
+    const mastro = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 1.6, 10), M(0x9aa3ab, { metalness: .6, roughness: .4 })); mastro.position.set(DP.x, YPISO + .8, DP.z); RA.add(mastro);
+    const PARAF = []; { const nut = M(0xc9a227, { metalness: .8, roughness: .3 }); for (const [dy, s] of [[-.12, 1], [-.12, -1], [.12, 1], [.12, -1]]) { const n = new THREE.Mesh(new THREE.CylinderGeometry(.022, .022, .03, 6), nut.clone()); n.rotation.z = Math.PI / 2; n.position.set(s * .07, dy, -.17); ELG.add(n); PARAF.push(n); } }
+    const brilhaParaf = i => { const n = PARAF[i % 4]; n.material.emissive = new THREE.Color(0xffd400); n.material.emissiveIntensity = 1.2; setTimeout(() => n.material.emissiveIntensity = 0, 350); };
+
+    // ---- modelo do sinal: quanto mais perto do eixo, mais perto de zero (−56 dBm no ponto ótimo)
+    const SN = { az: -5, el: 3, ruido: 0 };   // passos fora do eixo: azimute 1,5° por passo, elevação 1° por passo
+    const dbm = () => { const a = SN.az * 1.5, e = SN.el; return Math.max(-95, -56 - .409 * a * a - .889 * e * e + SN.ruido); };
+    const ccq = d => Math.max(0, Math.min(98, Math.round(15 + (d + 87) / 31 * 83)));
+    const somDe = d => d > -58 ? 3 : d > -66 ? 2 : d > -78 ? 1 : 0;   // 0 sem som, 1 lento, 2 rápido, 3 contínuo
+    const SOMTXT = ['*sem som*', '*bip lento*', '*BIP RÁPIDO*', '*BIIIIIP CONTÍNUO DE ALINHAMENTO*'];
+    let bipT = 0, tom = null; function bipe(dt, ativo) { if (!audio) return; const s = ativo ? somDe(dbm()) : 0;
+      if (s === 3) { if (!tom) { try { const o = audio.createOscillator(), g = audio.createGain(); o.type = 'square'; o.frequency.value = 1760; g.gain.value = .22; o.connect(g).connect(audio.destination); o.start(); tom = { o, g }; } catch (e) {} } return; }
+      if (tom) { try { tom.o.stop(); } catch (e) {} tom = null; } if (!s) return; bipT -= dt; if (bipT <= 0) { bipT = s === 1 ? .9 : .28; beep(1760, .09, 'square', .3); } }
+
+    // ---- tela do Zabbix (canvas único: vai para a TV de 100" e para o topo da tela do PC)
+    const ZC = document.createElement('canvas'); ZC.width = 1280; ZC.height = 720; const zg = ZC.getContext('2d'), zTex = new THREE.CanvasTexture(ZC); zTex.colorSpace = THREE.SRGBColorSpace;
+    const MX0 = -300, MX1 = 290, MZ0 = -170, MZ1 = 135, AR = { x: 40, y: 92, w: 1000, h: 560 };
+    const px = (x, z) => [AR.x + (x - MX0) / (MX1 - MX0) * AR.w, AR.y + (z - MZ0) / (MZ1 - MZ0) * AR.h];
+    const NOS = { core: { n: 'SW-CORE-M2', s: 'Prédio Principal', p: [97, -64], t: 'rot' }, ptp: { n: 'PTP-RADIO-Q2', p: [222, -66], t: 'ant' }, norte: { n: 'SW-DIST-NORTE', p: [14, -74], t: 'sw' },
+      centro: { n: 'SW-DIST-CENTRO', p: [62, 18], t: 'sw' }, leste: { n: 'SW-DIST-LESTE', p: [205, 12], t: 'sw' }, oeste: { n: 'SW-ACC-OESTE', p: [-128, 10], t: 'sw' },
+      guarita: { n: 'Guarita Oeste', p: [-246, -46], t: 'cam' }, portalo: { n: 'SW-ACC-PORTALÓ', p: [-40, 92], t: 'sw' }, central: { n: 'Central Elétrica', p: [-96, -102], t: 'ger' } };
+    const LIG = [['ptp', 'core'], ['core', 'norte'], ['core', 'centro'], ['core', 'leste'], ['norte', 'oeste'], ['oeste', 'guarita'], ['centro', 'portalo'], ['centro', 'central'], ['centro', 'leste'], ['oeste', 'portalo']];
+    const Z = { st: {}, alvo: 'down', snmp: 'down', prob: 0, t: 0 };   // st[nó] = 'down' | 'prob' | 'ok'
+    const zEstado = (k, v) => { Z.st[k] = v; Z.pulso = Z.pulso || {}; Z.pulso[k] = 1; };
+    function icone(t, x, y, cor) { zg.save(); zg.translate(x, y); zg.strokeStyle = '#cfe8ff'; zg.lineWidth = 2; zg.fillStyle = '#2a6fb8';
+      if (t === 'rot') { zg.beginPath(); zg.ellipse(0, 0, 26, 15, 0, 0, 7); zg.fill(); zg.stroke(); zg.beginPath(); zg.moveTo(-14, -2); zg.lineTo(14, -2); zg.moveTo(-14, 4); zg.lineTo(14, 4); zg.stroke(); }
+      else if (t === 'sw') { zg.beginPath(); zg.moveTo(-26, -6); zg.lineTo(-14, -16); zg.lineTo(26, -16); zg.lineTo(26, 6); zg.lineTo(14, 14); zg.lineTo(-26, 14); zg.closePath(); zg.fill(); zg.stroke(); for (const d of [-6, 3]) { zg.beginPath(); zg.moveTo(-16, d); zg.lineTo(12, d); zg.stroke(); } }
+      else if (t === 'ant') { zg.beginPath(); zg.moveTo(0, -18); zg.lineTo(-10, 18); zg.lineTo(10, 18); zg.closePath(); zg.fill(); zg.stroke(); for (const r of [12, 20]) { zg.beginPath(); zg.arc(0, -18, r, -2.4, -.75); zg.stroke(); } }
+      else if (t === 'cam') { zg.fillRect(-18, -8, 26, 14); zg.strokeRect(-18, -8, 26, 14); zg.beginPath(); zg.moveTo(8, -4); zg.lineTo(18, -9); zg.lineTo(18, 9); zg.lineTo(8, 4); zg.fill(); zg.stroke(); }
+      else { zg.fillRect(-20, -12, 40, 24); zg.strokeRect(-20, -12, 40, 24); zg.fillStyle = '#ffd400'; zg.beginPath(); zg.moveTo(3, -9); zg.lineTo(-6, 2); zg.lineTo(0, 2); zg.lineTo(-3, 10); zg.lineTo(7, -2); zg.lineTo(1, -2); zg.closePath(); zg.fill(); }
+      if (cor !== 'ok') { zg.fillStyle = cor === 'down' ? '#e53935' : '#ff9800'; zg.beginPath(); zg.arc(20, -16, 9, 0, 7); zg.fill(); zg.strokeStyle = '#fff'; zg.lineWidth = 2.5; zg.beginPath(); zg.moveTo(16, -20); zg.lineTo(24, -12); zg.moveTo(24, -20); zg.lineTo(16, -12); zg.stroke(); }
+      zg.restore(); }
+    function desenhaZbx(dt) { Z.t += dt; const T = Z.t, pisca = Math.sin(T * 6) > 0, g = zg, W = 1280, Hh = 720;
+      g.fillStyle = '#0e1116'; g.fillRect(0, 0, W, Hh);
+      g.fillStyle = '#1f2329'; g.fillRect(0, 0, W, 64); g.fillStyle = '#d40000'; g.fillRect(16, 12, 130, 40); g.fillStyle = '#fff'; g.font = '900 26px Arial'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillText('ZABBIX', 30, 33);
+      g.font = '600 24px Arial'; g.fillStyle = '#e6e6e6'; g.fillText('Monitoramento › Mapas › Topologia da Ilha', 170, 33);
+      const tudoOk = Object.values(Z.st).every(v => v === 'ok'); g.textAlign = 'right'; g.font = '700 20px Arial'; g.fillStyle = tudoOk ? '#59db8f' : '#ff6b6b'; g.fillText(new Date().toLocaleTimeString('pt-BR') + (tudoOk ? '  ●  TUDO OK' : '  ●  ' + Object.values(Z.st).filter(v => v !== 'ok').length + ' PROBLEMAS'), W - 20, 33);
+      // mapa: grade, ilha
+      g.fillStyle = '#0a1a2a'; g.fillRect(AR.x, AR.y, AR.w, AR.h); g.strokeStyle = 'rgba(120,170,220,.16)'; g.lineWidth = 1; g.setLineDash([4, 6]); g.textAlign = 'center'; g.font = '700 13px Arial'; g.fillStyle = '#ffcf4a';
+      for (let i = 0; i <= 18; i++) { const x = AR.x + i * AR.w / 18; g.beginPath(); g.moveTo(x, AR.y); g.lineTo(x, AR.y + AR.h); g.stroke(); if (i < 18) g.fillText(String.fromCharCode(65 + i), x + AR.w / 36, AR.y - 10); }
+      for (let j = 0; j <= 9; j++) { const y = AR.y + j * AR.h / 9; g.beginPath(); g.moveTo(AR.x, y); g.lineTo(AR.x + AR.w, y); g.stroke(); if (j < 9) g.fillText(String(j + 1), AR.x - 14, y + AR.h / 18); } g.setLineDash([]);
+      g.beginPath(); OUT.forEach(([x, z], i) => { const [a, b] = px(x, z); i ? g.lineTo(a, b) : g.moveTo(a, b); }); g.closePath(); g.fillStyle = '#123247'; g.fill(); g.strokeStyle = '#2f6f8f'; g.lineWidth = 3; g.stroke();
+      { const [a, b] = px(38.25, -28.75), [c, d] = px(156.75, 58.75); g.strokeStyle = '#1d4d4d'; g.lineWidth = 10; g.strokeRect(a, b, c - a, d - b); g.fillStyle = '#16402a'; g.fillRect(a + 14, b + 14, c - a - 28, d - b - 28); }
+      // enlace com o continente
+      { const [a, b] = px(...NOS.ptp.p), ok = Z.st.ptp !== 'down'; g.strokeStyle = ok ? '#59db8f' : (pisca ? '#ff4040' : '#7a1f1f'); g.setLineDash([10, 8]); g.lineDashOffset = -T * 30; g.lineWidth = 3; g.beginPath(); g.moveTo(a, b); g.lineTo(AR.x + AR.w - 6, AR.y + 20); g.stroke(); g.setLineDash([]); g.lineDashOffset = 0;
+        g.fillStyle = ok ? '#59db8f' : '#ff6b6b'; g.font = '700 14px Arial'; g.textAlign = 'right'; g.fillText(ok ? 'Continente · 5,7 GHz · −56 dBm' : 'Continente · SEM ENLACE', AR.x + AR.w - 10, AR.y + 40); }
+      // ligações
+      for (const [a, b] of LIG) { const A = px(...NOS[a].p), B = px(...NOS[b].p), ok = Z.st[a] !== 'down' && Z.st[b] !== 'down';
+        g.lineWidth = 3; g.strokeStyle = ok ? '#3ddc84' : (pisca ? '#e53935' : '#7a1f1f'); if (!ok) g.setLineDash([12, 8]); g.beginPath(); g.moveTo(...A); g.lineTo(...B); g.stroke(); g.setLineDash([]);
+        const mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+        if (ok) { for (let k = 0; k < 3; k++) { const u = ((T * .45 + k / 3 + a.length * .07) % 1); g.fillStyle = '#c8ffd9'; g.beginPath(); g.arc(A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u, 3.2, 0, 7); g.fill(); } }
+        g.font = '700 12px Arial'; g.textAlign = 'center'; const tx = ok ? `${(180 + Math.round(Math.sin(T + a.length) * 60))} Mbps` : 'Link Down · 0 bps'; const tw = g.measureText(tx).width + 10;
+        g.fillStyle = ok ? 'rgba(10,40,20,.85)' : 'rgba(60,10,10,.85)'; g.fillRect(mx - tw / 2, my - 9, tw, 18); g.fillStyle = ok ? '#7dffb0' : '#ff8a80'; g.fillText(tx, mx, my + 1); }
+      // nós
+      for (const [k, n] of Object.entries(NOS)) { const [x, y] = px(...n.p), st = Z.st[k] || 'down', pu = Z.pulso && Z.pulso[k] || 0;
+        if (pu > 0) { g.strokeStyle = st === 'ok' ? `rgba(61,220,132,${pu})` : `rgba(255,152,0,${pu})`; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 30 + (1 - pu) * 40, 0, 7); g.stroke(); Z.pulso[k] = Math.max(0, pu - dt * .8); }
+        if (st !== 'ok' && pisca) { g.fillStyle = st === 'down' ? 'rgba(229,57,53,.25)' : 'rgba(255,152,0,.22)'; g.beginPath(); g.arc(x, y, 32, 0, 7); g.fill(); }
+        icone(n.t, x, y, st); g.textAlign = 'center'; g.font = '800 14px Arial'; g.fillStyle = '#fff'; g.fillText(n.n, x, y + 30); if (n.s) { g.font = '700 12px Arial'; g.fillStyle = '#cfe3ff'; g.fillText(n.s, x, y - 30); }
+        const lb = st === 'ok' ? 'OK' : st === 'down' ? 'DOWN' : 'PROBLEM'; g.font = '800 12px Arial'; const lw = g.measureText(lb).width + 10; g.fillStyle = st === 'ok' ? '#2e9e5b' : st === 'down' ? '#d32f2f' : '#ef6c00'; g.fillRect(x - lw / 2, y + 40, lw, 17); g.fillStyle = '#fff'; g.fillText(lb, x, y + 49); }
+      g.textAlign = 'left'; g.font = '700 22px Arial'; g.fillStyle = '#fff'; g.fillText('TOPOLOGIA – ILHA', AR.x + 12, AR.y + 22);
+      // painel de problemas
+      const PX = 1060, lst = Object.entries(Z.st).filter(([, v]) => v !== 'ok'); g.fillStyle = '#161b22'; g.fillRect(PX, AR.y, 200, AR.h); g.fillStyle = '#e6e6e6'; g.font = '800 16px Arial'; g.fillText('Problemas', PX + 12, AR.y + 22);
+      lst.slice(0, 9).forEach(([k, v], i) => { const y = AR.y + 40 + i * 57; g.fillStyle = v === 'down' ? (pisca ? '#b71c1c' : '#8e1515') : '#e65100'; g.fillRect(PX + 8, y, 184, 52); g.fillStyle = '#fff'; g.font = '800 12px Arial'; g.fillText(v === 'down' ? 'DESASTRE' : 'ALTA', PX + 14, y + 14); g.font = '700 13px Arial'; g.fillText(NOS[k].n, PX + 14, y + 30); g.font = '500 11px Arial'; g.fillStyle = '#ffd7d7'; g.fillText(k === 'ptp' && v === 'prob' ? 'SNMP sem resposta' : 'Indisponível (ICMP)', PX + 14, y + 45); });
+      if (!lst.length) { g.fillStyle = '#59db8f'; g.font = '800 15px Arial'; g.fillText('Nenhum problema ✔', PX + 14, AR.y + 60); }
+      // rodapé: ícones de disponibilidade do PTP
+      const yb = AR.y + AR.h + 18; g.fillStyle = '#1f2329'; g.fillRect(0, yb - 4, W, Hh - yb + 4); g.font = '700 16px Arial'; g.fillStyle = '#e6e6e6'; g.fillText('PTP-RADIO-Q2 · 10.10.2.1 · Disponibilidade:', 40, yb + 22);
+      [['ZBX', 'off'], ['SNMP', Z.snmp], ['ICMP', Z.st.ptp === 'down' ? 'down' : 'ok']].forEach(([n, v], i) => { const x = 420 + i * 86; g.fillStyle = v === 'ok' ? '#2e9e5b' : v === 'off' ? '#4a4f57' : '#d32f2f'; g.fillRect(x, yb + 8, 74, 28); g.fillStyle = '#fff'; g.font = '800 15px Arial'; g.textAlign = 'center'; g.fillText(n, x + 37, yb + 23); g.textAlign = 'left'; });
+      zTex.needsUpdate = true; }
+
+    // ---- interface (tela cheia por cima do jogo)
+    const est = document.createElement('style'); est.textContent = `
+      #enl{position:fixed;inset:0;display:none;z-index:6;font-family:var(--body);color:#eef3f8;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+      #enl .leg{position:absolute;left:50%;bottom:max(18px,4vh);transform:translateX(-50%);width:min(680px,calc(100vw - 32px));box-sizing:border-box;background:rgba(13,34,71,.92);border:2px solid var(--gold,#f3cf7a);border-radius:12px;padding:12px 16px;text-align:center;display:none;font-size:clamp(14px,2.2vw,17px)}
+      #enl .leg b{color:#f3cf7a}#enl .leg button{margin-top:10px}
+      #enl button.op{display:block;width:100%;text-align:left;font:700 clamp(14px,2vw,16px) var(--body);background:#22324a;color:#fff;border:2px solid #3b5a85;border-radius:10px;padding:11px 14px;margin:8px 0;cursor:pointer}
+      #enl button.op:hover{border-color:#f3cf7a}#enl button.op code{font-size:.95em;color:#9fe6ff}
+      #enl button.go{font:900 17px var(--body);background:#f3cf7a;color:#0b1730;border:0;border-radius:10px;padding:11px 24px;cursor:pointer}
+      #enl .fone{position:absolute;right:max(14px,3vw);top:50%;transform:translateY(-50%);width:min(300px,42vw);display:none;background:#0d1117;border:10px solid #222;border-radius:30px;box-shadow:0 12px 40px rgba(0,0,0,.6);padding:14px 14px 18px;font-family:Arial,sans-serif}
+      #enl .fone .tp{font:800 13px Arial;color:#9aa4b2;display:flex;justify-content:space-between;margin-bottom:6px}#enl .fone .ap{font:800 15px Arial;color:#2db9ff;margin-bottom:8px}
+      #enl .fone .db{font:900 54px/1 Arial;text-align:center;margin:6px 0 2px}#enl .fone .dbl{text-align:center;font:700 12px Arial;color:#9aa4b2;margin-bottom:8px}
+      #enl .fone .bar{height:14px;background:#222a35;border-radius:7px;overflow:hidden}#enl .fone .bar i{display:block;height:100%;border-radius:7px;transition:width .25s}
+      #enl .fone table{width:100%;font:700 14px Arial;margin-top:10px;border-collapse:collapse}#enl .fone td{padding:4px 0}#enl .fone td+td{text-align:right;color:#fff}
+      #enl .fone .som{margin-top:10px;text-align:center;font:900 13px Arial;color:#ffd400;min-height:2.4em}
+      #enl .setas{position:absolute;left:max(14px,3vw);bottom:max(18px,5vh);display:none;gap:12px;flex-wrap:wrap;width:min(330px,52vw)}
+      #enl .setas button{width:84px;height:84px;font:900 34px Arial;border-radius:50%;border:3px solid #fff;background:rgba(31,78,156,.8);color:#fff;cursor:pointer;touch-action:manipulation}
+      #enl .setas .ok{width:auto;height:auto;border-radius:12px;font:900 15px var(--body);padding:12px 16px;background:#1d8a3a}
+      #enl .setas .dica{flex-basis:100%;font:800 14px var(--body);text-shadow:0 2px 6px #000;color:#fff}
+      #enl .pc{position:absolute;inset:0;display:none;background:#0b0e13;flex-direction:column;overflow:auto}
+      #enl .pc canvas{display:block;width:100%;max-width:min(100vw,calc(48vh * 16 / 9));margin:0 auto;aspect-ratio:16/9;height:auto;background:#000}
+      #enl .jan{flex:1;width:min(860px,100%);margin:0 auto;box-sizing:border-box;padding:10px 14px 18px}
+      #enl .jan .tb{display:flex;align-items:center;gap:8px;background:#252b35;border-radius:8px 8px 0 0;padding:7px 12px;font:800 13px Arial;color:#c9d6e3}#enl .jan .tb i{width:11px;height:11px;border-radius:50%;display:inline-block}
+      #enl .jan .ct{background:#141922;border:1px solid #252b35;border-top:0;border-radius:0 0 8px 8px;padding:12px 16px}
+      #enl .jan h3{margin:2px 0 6px;color:#f3cf7a;font-size:clamp(16px,2.4vw,20px)}#enl .jan p{margin:6px 0;font-size:clamp(14px,2vw,16px);line-height:1.4}
+      #enl .os{background:#fffbe6;color:#222;border-radius:8px;padding:10px 12px;font:600 14px/1.5 Arial;margin:8px 0}#enl .os b{color:#b3141f}
+      #enl .term{background:#000;color:#cfe8cf;font:500 clamp(11px,1.6vw,14px)/1.45 Consolas,monospace;border-radius:6px;padding:10px 12px;min-height:180px;white-space:pre-wrap;word-break:break-all}
+      #enl .term .pr{color:#59db8f}#enl .erro{background:#3a0d0d;border:2px solid #e53935;color:#ffb4b4;border-radius:8px;padding:10px 12px;margin:8px 0;font:700 14px Arial}
+      #enl .certo{background:#0d3a1d;border:2px solid #3ddc84;color:#b9ffd2;border-radius:8px;padding:10px 12px;margin:8px 0;font:700 14px Arial}
+      @media (max-width:700px){#enl .fone{top:auto;bottom:10px;transform:none;right:8px;width:50vw;padding:8px 9px;border-width:6px;border-radius:20px}#enl .fone .db{font-size:34px}#enl .fone table{font-size:12px;margin-top:6px}#enl .fone .ap{font-size:12px}#enl .fone .dbl{font-size:10px}#enl .setas{bottom:12px;left:8px;width:44vw;gap:8px}#enl .setas button{width:64px;height:64px;font-size:26px}#enl .setas .ok{font-size:13px;padding:10px 8px}#enl .setas .dica{font-size:12px}}
+      body.enl-alinha #mapp,body.enl-alinha #meter{display:none}`;
+    document.head.appendChild(est);
+    const ov = document.createElement('div'); ov.id = 'enl';
+    ov.innerHTML = `<div class="leg"></div>
+      <div class="fone"><div class="tp"><span>12:00</span><span>▮▮▮ 5G 82%</span></div><div class="ap">UISP · Alinhamento de antena</div><div class="db">—</div><div class="dbl">Sinal (dBm) · quanto mais perto de 0, melhor</div><div class="bar"><i></i></div>
+        <table><tr><td>Azimute</td><td class="az">—</td></tr><tr><td>Elevação</td><td class="el">—</td></tr><tr><td>CCQ</td><td class="cq">—</td></tr><tr><td>Rádio</td><td>PTP-RADIO-Q2</td></tr></table><div class="som">*sem som*</div></div>
+      <div class="setas"></div><div class="pc"><div class="jan"><div class="tb"><i style="background:#ff5f56"></i><i style="background:#ffbd2e"></i><i style="background:#27c93f"></i><span class="tt"></span></div><div class="ct"></div></div></div>`;
+    document.body.appendChild(ov); ov.querySelector('.pc').prepend(ZC);
+    const q = s => ov.querySelector(s), LEG = q('.leg'), FONE = q('.fone'), SETAS = q('.setas'), PC = q('.pc'), TT = q('.pc .tt'), CT = q('.pc .ct');
+    const legenda = (html, btn, fn) => { LEG.innerHTML = html + (btn ? `<br><button class="go">${btn}</button>` : ''); LEG.style.display = 'block'; ov.style.display = 'block'; if (btn) LEG.querySelector('button').onclick = () => { LEG.style.display = 'none'; fn && fn(); }; };
+    function pintaFone(conectado) { const d = dbm(), c = ccq(d), s = somDe(d); q('.fone .db').textContent = conectado ? d.toFixed(0) : '—'; q('.fone .db').style.color = d > -60 ? '#3ddc84' : d > -72 ? '#f2c230' : '#ff5a5a';
+      const b = q('.fone .bar i'); b.style.width = conectado ? Math.max(4, (d + 95) / 39 * 100) + '%' : '0%'; b.style.background = q('.fone .db').style.color;
+      q('.fone .az').textContent = conectado ? (247 + SN.az * 1.5).toFixed(1) + '°' : '—'; q('.fone .el').textContent = conectado ? (SN.el >= 0 ? '+' : '') + (1.2 + SN.el).toFixed(1) + '°' : '—'; q('.fone .cq').textContent = conectado ? c + '%' : '—';
+      q('.fone .som').textContent = conectado ? SOMTXT[s] : 'Conectando ao rádio 192.168.1.20…'; }
+
+    // ---- estado da missão
+    const EN = { on: false, etapa: '', t: 0, erros: 0, rota: null, ri: 0, depois: null, sit: 0, sobe: 0, aperta: 0, pose: '', alvoAz: 0, alvoEl: 0, tpl: '', notas: [] };
+    window.__enl = { spd: 0, _EN: EN, _SN: SN, _Z: Z };
+    const erro = (txt) => { EN.erros++; beep(150, .4, 'sawtooth', .09); return `<div class="erro">✖ ${txt}</div>`; };
+    function poseInstalar() { if (window.__ampPose && window.__ampPose.enl) return; const antes = window.__ampPose; const f = dt => { if (antes) antes(dt); if (!EN.on) return; const u = cabo.userData, T = performance.now() / 1000;
+        if (EN.pose === 'sobe') { const s = Math.sin(T * 7); u.shL.rotation.x = -2.6 + s * .3; u.shR.rotation.x = -2.6 - s * .3; u.elL.rotation.x = u.elR.rotation.x = -.35; u.thL.rotation.x = -.7 - s * .45; u.thR.rotation.x = -.7 + s * .45; u.knL.rotation.x = 1 + s * .4; u.knR.rotation.x = 1 - s * .4; }
+        else if (EN.pose === 'antena') { const a = EN.aperta > 0 ? Math.sin(EN.aperta * 28) * .35 : 0; u.shL.rotation.x = -1.35; u.shR.rotation.x = -1.45 + a; u.elL.rotation.x = -.5; u.elR.rotation.x = -.6 - Math.abs(a); u.head.rotation.x = -.15; }
+        else if (EN.pose === 'senta') { const s = EN.sit; u.thL.rotation.x = u.thR.rotation.x = -1.45 * s; u.knL.rotation.x = u.knR.rotation.x = 1.4 * s; u.shL.rotation.x = u.shR.rotation.x = -.55 * s; u.elL.rotation.x = u.elR.rotation.x = -.8 * s; } };
+      f.enl = 1; window.__ampPose = f; }
+    ATU.push((dt) => { if (!EN.on) return; poseInstalar(); Z.acc = (Z.acc || 0) + dt; if (Z.acc > .05) { desenhaZbx(Z.acc); Z.acc = 0; } });
+    const falaObj = new THREE.Object3D(); scene.add(falaObj);   // ponto no mundo para o balão de fala do sargento
+    function andarPor(pts, depois, sp = 2.4) { EN.rota = pts.map(v => WL(v)); EN.ri = 0; EN.depois = depois; EN.etapa = 'anda'; EN.vel = sp; EN.pose = ''; }
+    function limpa() { document.body.classList.remove('enl-alinha'); EN.on = false; EN.etapa = ''; EN.pose = ''; ov.style.display = 'none'; LEG.style.display = FONE.style.display = SETAS.style.display = 'none'; PC.style.display = 'none'; Z.vivo = false;
+      if (tom) { try { tom.o.stop(); } catch (e) {} tom = null; } window.__sgtMissao = null; window.__enl.spd = 0; if (window.__camHook && window.__camHook.enl) window.__camHook = null;
+      if (AMP.tvAntena) { AMP.tvAntena.material.map = AMP.telaPCAntena; AMP.monAntena.material.map = AMP.telaPCAntena; AMP.tvAntena.material.needsUpdate = AMP.monAntena.material.needsUpdate = true; } }
+
+    // ---- câmera de cada momento
+    const camAux = new THREE.PerspectiveCamera(), CP = new THREE.Vector3(), CQ = new THREE.Quaternion();
+    function camEnl(dt) { if (!EN.on) return; const e = EN.etapa, P = cabo.position; if (e === 'anda') { EN.camIni = 0; return; }
+      const poe = (pos, alvo, k = 1) => { camAux.position.copy(pos); camAux.lookAt(alvo); if (!EN.camIni) { EN.camIni = 1; CP.copy(camera.position); CQ.copy(camera.quaternion); } CP.lerp(camAux.position, k); CQ.slerp(camAux.quaternion, k); camera.position.copy(CP); camera.quaternion.copy(CQ); camera.updateMatrixWorld(); };
+      if (e === 'alerta') { poe(WL(SL(-.15, 1.6, 1.8)), WL(SL(.35, 1.7, -1.85)), Math.min(1, dt * 2.5)); return; }
+      if (e === 'sobe' || e === 'desce') { poe(P.clone().add(WL(NV.clone().multiplyScalar(7).add(TG.clone().multiplyScalar(3.5)).setY(1.2)).sub(RA.position)), P.clone().setY(P.y + 1), Math.min(1, dt * 4)); return; }
+      if (['afrouxa', 'conecta', 'azimute', 'elevacao', 'trava'].includes(e)) { const D = WL(ANT.position), C = D.clone().add(WL(NV.clone().multiplyScalar(2.9).add(TG.clone().multiplyScalar(-2.2))).sub(RA.position)); C.y = D.y + .55; poe(C, D.clone().lerp(P.clone().setY(P.y + 1.3), .45), Math.min(1, dt * 3)); return; }
+      if (e === 'levantaCabo' || e === 'cafe' || e === 'fim2') { poe(WL(SL(-1.95, 1.95, 1.85)), WL(SL(.85, 1.05, -.9)), Math.min(1, dt * 2)); return; }
+      if (e === 'pc' || e === 'final' || e === 'senta') { poe(WL(SL(.75, 1.7, 1.55)), WL(SL(.5, 1.65, -1.85)), Math.min(1, dt * 2.5)); return; } }
+    camEnl.enl = 1;
+
+    // ---- ATO 1: alerta, subida e alinhamento
+    const FALAS = ['Oficial de serviço, aqui é o sargento da Antena de Comunicação.', 'O enlace de rádio com o continente caiu, senhor! O Zabbix está todo vermelho na TV.', 'Trocaram a antena da ponta remota e mudaram a configuração dela.', 'O Cabo Velho já vai subir na torre para realinhar. Câmbio, desligo.'];
+    // voz do sargento: usa a voz em português do próprio aparelho; sem voz, segue pelo tempo do texto
+    const vozPt = () => { try { const v = speechSynthesis.getVoices().filter(v => /^pt/i.test(v.lang)); return v.find(v => /BR/i.test(v.lang) && /male|daniel|antonio|ricardo|masc/i.test(v.name)) || v.find(v => /BR/i.test(v.lang)) || v[0] || null; } catch (e) { return null; } };
+    function falar(txt, fim) { let feito = false; const ok = () => { if (!feito) { feito = true; fim && fim(); } };
+      let temVoz = false; try { if (!window.speechSynthesis) throw 0; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'pt-BR'; const v = vozPt(); if (v) { u.voice = v; temVoz = true; } u.rate = 1.02; u.pitch = .75; u.volume = 1; u.onend = ok; u.onerror = ok; speechSynthesis.speak(u); } catch (e) {}
+      setTimeout(ok, temVoz ? 2500 + txt.length * 140 : 900 + txt.length * 55); }   // sem voz no aparelho: segue pelo tempo de leitura
+    function proxFala() { if (!EN.on || EN.etapa !== 'alerta') return; EN.fala++; if (EN.fala >= FALAS.length) { EN.falasFim = 1; return; }
+      legenda(`<b>Sargento, ao telefone com o oficial de serviço:</b><br>“${FALAS[EN.fala]}”`); beep(520, .05, 'sine', .04); falar(FALAS[EN.fala], () => setTimeout(proxFala, 350)); }
+    function alerta() { EN.etapa = 'alerta'; EN.t = 0; EN.fala = -1; Object.keys(NOS).forEach(k => Z.st[k] = 'down'); Z.snmp = 'down';
+      window.__sgtMissao = { pos: SL(1.25, .04, -.55), olhar: Math.atan2(-.75, -1.3), fone: true };
+      const c = WL(SL(-1.45, .04, .2)); cabo.position.set(c.x, Y0, c.z); cabo.rotation.y = Math.atan2(1.95, -2.05); yaw = cabo.rotation.y;
+      [0, 1, 2].forEach(i => setTimeout(() => EN.on && EN.etapa === 'alerta' && beep(880, .25, 'square', .06), i * 500)); }
+    function subir() { window.__sgtMissao = { pos: SL(1.25, .04, -.55), olhar: Math.atan2(-.75, -1.3), fone: false };
+      andarPor([SL(-1.2, .04, 1.2), SL(-1.2, 0, 2.6), new THREE.Vector3(-2.2, Y0, 4.2), fora(0, .95).setY(Y0)], () => { EN.etapa = 'sobe'; EN.pose = 'sobe'; EN.sobe = 0; legenda('Subindo pela <b>escada externa</b> da torre…'); }); }
+    function chegouTopo() { EN.etapa = 'afrouxa'; EN.t = 0; EN.pose = 'antena'; LEG.style.display = 'none'; const p = fora(YP, 1.25, .1); cabo.position.set(...WL(p).setY(YPISO).toArray()); cabo.rotation.y = Math.atan2(DP.x - p.x, DP.z - p.z);
+      legenda('Na plataforma a 24 m, sem obstruções na visada. O Cabo <b>afrouxa levemente os parafusos</b> para a antena girar com leveza…'); for (let i = 0; i < 6; i++) setTimeout(() => { if (EN.etapa === 'afrouxa') { EN.aperta = .4; brilhaParaf(i); beep(1500, .02, 'square', .05); } }, 300 + i * 330); }
+    function conecta() { EN.etapa = 'conecta'; EN.t = 0; LEG.style.display = 'none'; FONE.style.display = 'block'; pintaFone(false); }
+    function setas(tipo) { EN.etapa = tipo; document.body.classList.add('enl-alinha'); const h = tipo === 'azimute';
+      SETAS.innerHTML = `<div class="dica">${h ? 'AZIMUTE (horizontal): toque nas setas para girar a antena' : 'ELEVAÇÃO (vertical): incline a antena'}</div>` + (h ? '<button data-d="-1">◀</button><button data-d="1">▶</button>' : '<button data-d="1">▲</button><button data-d="-1">▼</button>') + `<button class="ok">${h ? 'Pico achado – apertar de leve' : 'Bipe contínuo – travar'}</button>`;
+      SETAS.style.display = 'flex'; SETAS.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => mexe(h, +b.dataset.d)); SETAS.querySelector('.ok').onclick = () => confirma(h); }
+    function mexe(h, d) { if (EN.aperta > 0) return; EN.aperta = .45; brilhaParaf(Math.floor(Math.random() * 4)); for (let i = 0; i < 3; i++) setTimeout(() => beep(1600 + i * 80, .015, 'square', .05), i * 110);
+      if (h) SN.az += d; else SN.el += d; SN.az = Math.max(-9, Math.min(9, SN.az)); SN.el = Math.max(-6, Math.min(6, SN.el)); }
+    function confirma(h) { const d = dbm();
+      if (h ? SN.az !== 0 : SN.el !== 0) { legenda(erro(`Ainda não é o pico: o sinal está em <b>${d.toFixed(0)} dBm</b>. Continue girando ${h ? 'para os lados' : 'para cima ou para baixo'} até o número chegar o mais perto de zero.`), 'Continuar ajustando'); return; }
+      SETAS.style.display = 'none';
+      if (h) { legenda(`<div class="certo">✔ Pico horizontal: ${d.toFixed(0)} dBm. Parafusos horizontais levemente apertados.</div>Agora a <b>elevação</b>: incline a antena até o bipe ficar contínuo.`, 'Ajustar elevação', () => setas('elevacao')); }
+      else trava(); }
+    function trava() { EN.etapa = 'trava'; ov.style.display = 'block'; LEG.innerHTML = `<b>Bipe contínuo · ${dbm().toFixed(0)} dBm · CCQ ${ccq(dbm())}%</b><br>Como fazer o travamento final?
+        <button class="op" data-k="0">1. Apertar firme todos os parafusos, em cruz, e conferir de novo o sinal no celular</button>
+        <button class="op" data-k="1">2. Apertar com toda a força um lado de cada vez, sem olhar o celular</button>`; LEG.style.display = 'block';
+      LEG.querySelectorAll('.op').forEach(b => b.onclick = () => { if (b.dataset.k === '1') { SN.el = 2; legenda(erro(`O aperto desigual tirou a antena do eixo: o sinal caiu para <b>${dbm().toFixed(0)} dBm</b> e o bipe parou de ser contínuo. Afrouxe um pouco e reajuste a elevação.`), 'Reajustar elevação', () => setas('elevacao')); }
+        else { LEG.style.display = 'none'; for (let i = 0; i < 8; i++) setTimeout(() => { if (EN.etapa === 'trava') { EN.aperta = .4; brilhaParaf(i); beep(1400 + (i % 4) * 90, .02, 'square', .05); } }, i * 260);
+          setTimeout(() => legenda(`<div class="certo">✔ Antena travada. Conferência no app: <b>${dbm().toFixed(0)} dBm · CCQ ${ccq(dbm())}%</b> · bipe contínuo.</div>Agora é descer e terminar a configuração no computador.`, 'Descer da torre', descer), 2300); } }); }
+    function descer() { document.body.classList.remove('enl-alinha'); FONE.style.display = 'none'; if (tom) { try { tom.o.stop(); } catch (e) {} tom = null; } EN.etapa = 'desce'; EN.pose = 'sobe'; EN.sobe = 1; const p = fora(YP, .95); cabo.position.set(...WL(p).toArray()); cabo.rotation.y = Math.atan2(-NV.x, -NV.z); legenda('Descendo pela escada da torre…'); }
+    function irSala() { LEG.style.display = 'none'; window.__sgtMissao = { pos: SL(1.55, .04, -.1), olhar: Math.atan2(-1.05, -1.75), fone: false };
+      andarPor([new THREE.Vector3(-2.2, Y0, 4.2), SL(-1.2, 0, 2.6), SL(-1.2, .04, 1.2), SL(.15, .04, -.1), SL(.5, .04, -.62)], () => { EN.etapa = 'senta'; EN.t = 0; EN.pose = 'senta'; if (window.__cadeira) window.__cadeira.position.z = -2 + 1.35; }); }
+
+    // ---- ATO 2: computador (tela cheia)
+    const PASSO = (titulo, tt, html) => { PC.style.display = 'flex'; ov.style.display = 'block'; TT.textContent = tt; CT.innerHTML = `<h3>${titulo}</h3>${html}`; PC.scrollTop = 0; };
+    const opcoes = (ops, fn) => { CT.insertAdjacentHTML('beforeend', ops.map((o, i) => `<button class="op" data-i="${i}">${i + 1}. ${o}</button>`).join('')); CT.querySelectorAll('.op').forEach(b => b.onclick = () => fn(+b.dataset.i)); };
+    const OSTXT = '<div class="os"><b>ORDEM DE SERVIÇO</b> · Rádio remoto substituído no continente<br>Frequência: <b>5745 MHz</b> · Largura de canal: <b>40 MHz</b> · SSID: <b>ILHA-PTP-02</b> · Segurança: WPA2-AES<br>SNMP: <b>v2c</b> · Community de leitura: <b>rede_isp</b> · IP do rádio da ilha: <b>10.10.2.1</b></div>';
+    function pareamento(msg = '') { EN.etapa = 'pc';
+      PASSO('Passo 1 · Parear com a antena remota nova', 'Rádio PTP-RADIO-Q2 · 10.10.2.1 · Wireless', `${OSTXT}${msg}<p>Qual perfil aplicar no rádio da ilha?</p>`);
+      opcoes(['5825 MHz · 20 MHz · SSID ILHA-PTP-01', '5745 MHz · 20 MHz · SSID ILHA-PTP-02', '5745 MHz · 40 MHz · SSID ILHA-PTP-02'], i => {
+        if (i !== 2) { pareamento(erro(`Sem enlace RF: o rádio remoto não associou (${i === 0 ? 'frequência e SSID antigos' : 'largura de canal diferente da ponta remota'}). Confira a ordem de serviço.`)); return; }
+        const gen = EN.gen = (EN.gen || 0) + 1; Object.keys(NOS).forEach((k, j) => setTimeout(() => { if (EN.gen === gen && EN.on) zEstado(k, k === 'ptp' ? 'prob' : 'ok'); }, 300 + j * 180)); Z.snmp = 'down';
+        snmp(0, '<div class="certo">✔ Enlace RF fechado: a rede da ilha voltou a falar com o continente. Na TV, o PTP-RADIO-Q2 ainda está PROBLEM: falta o SNMP.</div>'); }); }
+    function snmp(sub, msg = '') { const tt = 'Rádio PTP-RADIO-Q2 · 10.10.2.1 · ' + ['Configuração', 'Services', 'Services › SNMP', 'Services › SNMP'][sub];
+      if (sub === 0) { PASSO('Passo 2 · Ativar o SNMP no rádio', tt, `${msg}<p>Em qual aba do rádio fica o agente SNMP?</p>`); opcoes(['Wireless', 'Network', 'Services (Serviços)', 'System'], i => i === 2 ? snmp(1) : snmp(0, erro('Essa aba não tem o agente SNMP. Procure em Serviços.'))); }
+      else if (sub === 1) { PASSO('Passo 2 · Ativar o SNMP no rádio', tt, `${msg}<p>Habilite o agente SNMP. Qual versão?</p>`); opcoes(['SNMPv1', 'SNMPv2c', 'SNMPv3'], i => i === 1 ? snmp(2) : snmp(1, erro(i === 0 ? 'v1 é antiga e não é a combinada na ordem de serviço.' : 'v3 exige usuário e criptografia; o Zabbix está preparado para v2c.'))); }
+      else if (sub === 2) { PASSO('Passo 2 · Ativar o SNMP no rádio', tt, `${msg}<p>Community (senha de leitura):</p>`); opcoes(['public', 'rede_isp', 'admin123'], i => i === 1 ? snmp(3) : snmp(2, erro('Essa não é a community da ordem de serviço. Se ficar diferente, o Zabbix não vai conseguir ler o rádio.'))); }
+      else { PASSO('Passo 2 · Ativar o SNMP no rádio', tt, '<p>SNMP Agent: <b>ativado</b> · Versão: <b>v2c</b> · Community: <b>rede_isp</b></p><p>E agora?</p>');
+        opcoes(['Clicar em <b>Salvar / Aplicar</b>', 'Fechar a aba do navegador'], i => { if (i === 0) terminal1('<div class="certo">✔ Configuração salva e aplicada no rádio.</div>');
+          else { EN.gen = (EN.gen || 0) + 1; Object.keys(NOS).forEach(k => Z.st[k] = 'down'); pareamento(erro('Você fechou sem salvar: <b>todas as configurações pendentes foram perdidas</b>, inclusive o perfil do enlace. Na TV, tudo voltou a ficar vermelho. Volte ao passo anterior.')); } }); } }
+    function terminal1(msg = '') { PASSO('Passo 3 · Testar do servidor Zabbix', 'Terminal — zabbix-server', `${msg}<p>Qual comando rodar <b>primeiro</b> para testar a conexão com o rádio?</p>`);
+      opcoes(['<code>nslookup 10.10.2.1</code>', '<code>ping 10.10.2.1</code>', '<code>ssh admin@10.10.2.1</code>', '<code>traceroute www.google.com</code>'], i => i === 1 ? terminal2() : terminal1(erro('Primeiro teste é a conectividade básica: se o rádio não responder ao ping, nada mais vai funcionar.'))); }
+    function terminal2() { PASSO('Passo 3 · Testar do servidor Zabbix', 'Terminal — zabbix-server', '<div class="term"></div><div class="fim"></div>'); const tm = CT.querySelector('.term'), FIM = CT.querySelector('.fim');
+      const out1 = 'SNMPv2-MIB::sysDescr.0 = STRING: Linux 2.6.32.71 #1 Tue Oct 15 11:20:04 EEST 2024 mips\nSNMPv2-MIB::sysObjectID.0 = OID: SNMPv2-SMI::enterprises.41112.1.4\nDISMAN-EVENT-MIB::sysUpTimeInstance = Timeticks: (4521800) 12:33:38.00\nSNMPv2-MIB::sysContact.0 = STRING: NOC-ILHA\nSNMPv2-MIB::sysName.0 = STRING: PTP-RADIO-Q2';
+      const out2 = out1 + '\nSNMPv2-MIB::sysLocation.0 = STRING: Torre Q2 - Ilha\nSNMPv2-MIB::sysServices.0 = INTEGER: 72';
+      const out3 = 'IF-MIB::ifIndex.1 = INTEGER: 1\nIF-MIB::ifIndex.2 = INTEGER: 2\nIF-MIB::ifDescr.1 = STRING: eth0\nIF-MIB::ifDescr.2 = STRING: ath0\nIF-MIB::ifSpeed.1 = Gauge32: 1000000000\nIF-MIB::ifOperStatus.1 = INTEGER: up(1)\nIF-MIB::ifOperStatus.2 = INTEGER: up(1)';
+      const cmds = ['ping -c 4 10.10.2.1', 'snmpwalk -v2c -c rede_isp 10.10.2.1', 'snmpwalk -v2c -c rede_isp udp:10.10.2.1:161', 'snmpwalk -v2c -c rede_isp 10.10.2.1 1.3.6.1.2.1.1', 'snmpwalk -v2c -c rede_isp 10.10.2.1 1.3.6.1.4.1.41112.1.4'];
+      const ping = 'PING 10.10.2.1 56(84) bytes of data.\n' + [1, 2, 3, 4].map(i => `64 bytes from 10.10.2.1: icmp_seq=${i} ttl=64 time=${(1.6 + Math.random()).toFixed(2)} ms`).join('\n') + '\n--- 10.10.2.1 ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss';
+      const fila = []; const dig = (txt) => fila.push(['d', txt]), sai = (txt) => fila.push(['s', txt]), limpaT = () => fila.push(['c']), espera = ms => fila.push(['w', ms]);
+      dig(cmds[0]); sai(ping); espera(700); cmds.slice(1).forEach(c => { dig(c); espera(350); }); espera(500); limpaT(); sai(out1); espera(1300); limpaT(); sai(out2); espera(1300); limpaT(); sai(out3); espera(800);
+      let html = ''; const pinta = () => tm.innerHTML = html;
+      (function roda() { if (!EN.on) return; const it = fila.shift(); if (!it) { FIM.innerHTML = '<div class="certo">✔ Teste finalizado com sucesso: o rádio responde ao ping e ao SNMP (UDP 161, community rede_isp).</div>'; opcoes(['Ir para o Zabbix (templates)'], () => template()); return; }
+        if (it[0] === 'c') { html = '<span class="pr">bash$</span> clear\n'; pinta(); beep(700, .03, 'square', .03); setTimeout(() => { html = ''; pinta(); roda(); }, 350); return; }
+        if (it[0] === 'w') { setTimeout(roda, it[1]); return; }
+        if (it[0] === 's') { html += it[1] + '\n'; pinta(); tm.scrollTop = 1e6; setTimeout(roda, 250); return; }
+        html += '<span class="pr">bash$</span> '; let k = 0; (function letra() { if (!EN.on) return; html += it[1][k++]; pinta(); if (k < it[1].length) { if (k % 3 === 0) beep(1900, .006, 'square', .015); setTimeout(letra, 28); } else { html += '\n'; pinta(); setTimeout(roda, 200); } })(); })(); }
+    function template(msg = '') { PASSO('Passo 4 · Template no Zabbix', 'Zabbix · Coleta de dados › Templates', `${msg}<p>Como coletar as métricas do rádio (sinal, CCQ, clientes e tráfego)?</p>`);
+      opcoes(['Importar o template do fabricante (.yaml) em Coleta de dados › Templates › Importar', 'Usar o template nativo <b>Generic by SNMP</b> + ICMP Ping', 'Não usar template nenhum'], i => {
+        if (i === 2) { template(erro('Sem template o host não tem itens: nada seria coletado e o mapa continuaria sem dados.')); return; }
+        EN.tpl = i === 0 ? 'Template do fabricante (sinal, CCQ, clientes, tráfego)' : 'Generic by SNMP + ICMP (dados básicos)';
+        host(0, `<div class="certo">✔ ${i === 0 ? 'Template importado: vai trazer nível de sinal, CCQ, clientes e tráfego.' : 'Template nativo vinculado: funciona, mas sem as métricas específicas de rádio.'}</div>`); }); }
+    function host(sub, msg = '') { const tt = 'Zabbix · Coleta de dados › Hosts › PTP-RADIO-Q2';
+      if (sub === 0) { PASSO('Passo 5 · Configurar o host', tt, `${msg}<p>Host <b>PTP-RADIO-Q2</b> · grupo <b>Redes/Antenas</b> · template vinculado. Qual interface usar?</p>`);
+        opcoes(['Agente Zabbix · 10.10.2.1 · porta 10050', 'SNMP · 10.10.2.1 · porta <b>161</b> · SNMPv2', 'SNMP · 10.10.2.1 · porta 162 · SNMPv2'], i => i === 1 ? host(1) : host(0, erro(i === 0 ? 'O rádio não tem agente Zabbix instalado: o ícone ZBX fica vermelho. Use a interface SNMP.' : 'Porta 162 é de trap (o rádio enviando avisos), não de consulta: <b>Timeout while connecting</b>. A consulta SNMP é na UDP 161.'))); }
+      else { PASSO('Passo 5 · Configurar o host', tt, `${msg}<p>Aba <b>Macros</b>: qual valor para <code>{$SNMP_COMMUNITY}</code>?</p>`);
+        opcoes(['public', 'rede_isp', '{$SNMP_COMMUNITY}'], i => { if (i !== 1) { Z.snmp = 'down'; host(1, erro('O ícone <b>SNMP ficou vermelho</b>: "Timeout while waiting for data". A macro precisa ser igual à community salva no rádio.')); return; } coleta(); }); } }
+    function coleta() { PASSO('Passo 5 · Configurar o host', 'Zabbix · Coleta de dados › Hosts', '<div class="certo">✔ Host salvo. Aguardando a primeira coleta (1 a 2 minutos)…</div><div class="term">Itens SNMP: aguardando…</div>');
+      const tm = CT.querySelector('.term'); let s = 0; const lin = ['Disponibilidade SNMP: verificando…', 'ICMP ping: 1 (UP) · perda 0%', 'Sinal (dBm): −56', 'CCQ: 98%', 'Tráfego ath0: 238 Mbps', 'Disponibilidade SNMP: <span style="color:#59db8f">VERDE</span>'];
+      const iv = setInterval(() => { if (!EN.on) { clearInterval(iv); return; } tm.innerHTML += '\n' + lin[s++]; if (s >= lin.length) { clearInterval(iv); Z.snmp = 'ok'; zEstado('ptp', 'ok'); setTimeout(final, 900); } }, 700); }
+    function final() { PC.style.display = 'none'; EN.etapa = 'final'; EN.t = 0; Z.vivo = true; [0, 1, 2, 3].forEach(i => setTimeout(() => beep([523, 659, 784, 1046][i], .2, 'triangle', .1), i * 130)); toast('Monitoramento restabelecido!'); }
+    function relatorio() { const st = EN.erros === 0 ? 3 : EN.erros <= 2 ? 2 : 1;
+      legenda(`<b>RELATÓRIO DA MISSÃO</b><br>Enlace PTP: <b>−56 dBm · CCQ 98%</b> · Zabbix: <b>tudo OK</b><br>${EN.tpl}<br>Tempo: <b>${fmt(ptime)}</b> · Erros: <b>${EN.erros}</b> · ${'★'.repeat(st)}${'☆'.repeat(3 - st)}`, 'Concluir missão', () => { limpa(); nextPhase(st); }); }
+
+    Object.assign(window.__enl, {
+      setup(on) { limpa(); if (!on) return; EN.on = true; EN.erros = 0; EN.abriu = 0; EN.cartao = 0; EN.camIni = 0; EN.falaIni = 0; EN.falasFim = 0; EN.fimSgt = 0; EN.tpl = ''; SN.az = -5; SN.el = 3; Z.st = {}; Z.pulso = {}; Z.vivo = true; window.__camHook = camEnl; poseInstalar();
+        if (AMP.tvAntena) { AMP.tvAntena.material.map = zTex; AMP.monAntena.material.map = zTex; AMP.tvAntena.material.needsUpdate = AMP.monAntena.material.needsUpdate = true; }
+        alerta(); },
+      upd(dt, P) { if (!EN.on) return 0; const e = EN.etapa; window.__enl.spd = 0; vel.set(0, 0, 0); EN.t += dt; EN.aperta = Math.max(0, EN.aperta - dt);
+        AZG.rotation.y += ((AZ0 + SN.az * 1.5 * Math.PI / 180 * 2.2) - AZG.rotation.y) * Math.min(1, dt * 5); ELG.rotation.x += ((-SN.el * Math.PI / 180 * 2.5) - ELG.rotation.x) * Math.min(1, dt * 5);
+        if (e === 'alerta') { if (!EN.falaIni) { EN.falaIni = 1; EN.fala = -1; proxFala(); }
+          if (EN.falasFim && !EN.cartao) { EN.cartao = 1; legenda('<b>ALERTA NO NOC</b><br>PTP-RADIO-Q2 <b>DOWN</b> · toda a topologia sem monitoramento.', 'Pegar o celular e subir na torre', () => { EN.cartao = 0; subir(); }); } return .05; }
+        if (e === 'anda') { const alvo = EN.rota[EN.ri], dx = alvo.x - P.x, dz = alvo.z - P.z, d = Math.hypot(dx, dz);
+          if (d < .1) { EN.ri++; if (EN.ri >= EN.rota.length) { const f = EN.depois; EN.depois = null; f && f(); } return .2; }
+          const st = Math.min(d, EN.vel * dt); P.x += dx / d * st; P.z += dz / d * st; P.y += (alvo.y - P.y) * Math.min(1, dt * 8); window.__enl.spd = EN.vel;
+          let da = Math.atan2(dx, dz) - cabo.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); cabo.rotation.y += da * Math.min(1, dt * 8);
+          let dy = Math.atan2(dx, dz) - yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); yaw += dy * Math.min(1, dt * 3); return .2; }
+        if (e === 'sobe' || e === 'desce') { EN.sobe = Math.max(0, Math.min(1, EN.sobe + (e === 'sobe' ? 1 : -1) * dt / 6.5)); const p = WL(fora(YP * EN.sobe, .95)); P.set(p.x, p.y - .25 + (e === 'sobe' ? 0 : 0), p.z); cabo.rotation.y = Math.atan2(-NV.x, -NV.z);
+          if (e === 'sobe' && EN.sobe >= 1) chegouTopo(); if (e === 'desce' && EN.sobe <= 0) { EN.pose = ''; P.y = Y0; irSala(); } return .3; }
+        if (e === 'afrouxa') { if (EN.t > 2.8) conecta(); return .35; }
+        if (e === 'conecta') { SN.ruido = (Math.random() - .5) * 1.2; if (EN.t > 1.8) { pintaFone(true); setas('azimute'); } else pintaFone(false); return .35; }
+        if (e === 'azimute' || e === 'elevacao' || e === 'trava') { SN.ruido += ((Math.random() - .5) * 1.1 - SN.ruido) * Math.min(1, dt * 4); pintaFone(true); bipe(dt, true); return .4 + .2 * (1 - Math.min(1, -dbm() / 95)); }
+        if (e === 'senta') { EN.sit = Math.min(1, EN.t / .6); const c = WL(SL(.5, .04, -.62)); P.set(c.x, Y0 - .43 * EN.sit, c.z); cabo.rotation.y = Math.PI + .2; if (EN.t > 1.6 && !EN.abriu) { EN.abriu = 1; pareamento(); } return .55; }
+        if (e === 'pc' || e === 'final') { const c = WL(SL(.5, .04, -.62)); P.set(c.x, Y0 - .43, c.z); cabo.rotation.y = Math.PI + .2; if (e === 'final' && EN.t > 3.6) { EN.etapa = 'levantaCabo'; EN.t = 0; } return e === 'final' ? 1 : .7; }
+        if (e === 'levantaCabo') { EN.sit = Math.max(0, 1 - EN.t / .6); const c = WL(SL(.5, .04, -.62)), alvo = WL(SL(-1.25, .04, .35));
+          if (EN.sit > 0) { P.set(c.x, Y0 - .43 * EN.sit, c.z); return 1; } EN.pose = ''; const dx = alvo.x - P.x, dz = alvo.z - P.z, d = Math.hypot(dx, dz); P.y = Y0;
+          if (d > .08) { const st = Math.min(d, 1.6 * dt); P.x += dx / d * st; P.z += dz / d * st; window.__enl.spd = 1.6; let da = Math.atan2(dx, dz) - cabo.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); cabo.rotation.y += da * Math.min(1, dt * 8); return 1; }
+          cabo.rotation.y = Math.atan2(1.75, -2.2); EN.etapa = 'cafe'; EN.t = 0; window.__sgtCafe = true; window.__sgtMissao = null; legenda('Missão cumprida! O sargento aproveita para buscar um <b>cafezinho</b> e voltar para o posto…'); return 1; }
+        if (e === 'cafe') { if ((window.__npc && window.__npc.fase === 'sentado' && EN.t > 4) || EN.t > 40) { EN.etapa = 'fim2'; LEG.style.display = 'none'; relatorio(); } return 1; }
+        if (e === 'fim2') return 1;
+        return .1; },
+      hud() { $('qname').textContent = `Missão ${slotOf(9) + 1} de ${ORDER.length} · Enlace da Antena`; const e = EN.etapa;
+        $('qgoal').textContent = ({ alerta: 'Alerta: enlace PTP caiu', anda: 'A caminho', sobe: 'Subindo na torre', afrouxa: 'Preparando a antena', conecta: 'Conectando o celular', azimute: 'Alinhar o azimute', elevacao: 'Alinhar a elevação', trava: 'Travar a antena', desce: 'Descendo da torre', senta: 'No computador', pc: 'Configurar rádio e Zabbix', final: 'Monitoramento OK', levantaCabo: 'Monitoramento OK', cafe: 'Monitoramento OK', fim2: 'Monitoramento OK' }[e] || 'Enlace da Antena') + ` · erros: ${EN.erros} · ${fmt(ptime)}`;
+        $('meterLabel').textContent = ['azimute', 'elevacao', 'trava'].includes(e) ? 'Sinal da antena' : 'Andamento da missão'; },
+      map(g, P, T) { if (!EN.on || EN.etapa === 'final') return; if (Math.sin(T * 6) > -.2) { const c = RA.position; g.fillStyle = '#ff3b2b'; g.beginPath(); g.arc(mx(c.x), mz(c.z), 4.2, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1; g.stroke(); } } });
+    // libera "Descer" depois de travar e o andar da sala depois de pareamento
+    EN.abriu = 0;
+  }
+  // ---------------- link direto para a fase do enlace (vale também no site publicado): ?teste=enlace
+  if (new URLSearchParams(location.search).get('teste') === 'enlace')
+    say('Sargento', 'Teste · Enlace da Antena', BRIEF[9] + obj(9), 'Começar o teste', () => startPhase(9));
   // ---------------- atalho de teste (só no computador local): http://localhost:8080/?teste=apagao abre direto a missão do Apagão
   if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) && new URLSearchParams(location.search).get('teste') === 'apagao')
     say('Sargento', 'Teste · Apagão na Ilha', BRIEF[7] + obj(7), 'Começar o teste', () => startPhase(7));
