@@ -1,14 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head> 
-<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-WZXSZWMH"></script>
-<script> 
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-</script>
-  
-                          <meta name="google-site-verification" content="w3jKKeNg03KjKOYbWl_iynIFhAnfBV2rsNhhb0v031E" />
-                          <meta name="google-site-verification" content="w3jKKeNg03KjKOYbWl_iynIFhAnfBV2rsNhhb0v031E" /><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Pavões na Ilha</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -325,7 +316,7 @@ const brTex = canvasTex(1024, 716, drawBR);
     g.fillStyle = '#1f4e9c'; g.fillRect(0, 0, W, 10);
     g.fillStyle = '#17346e'; g.font = '700 58px Montserrat, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     try { g.letterSpacing = '10px'; } catch (e) {}
-    g.fillText('AQUI SE FORMAM PROFISSIONAIS DO MAR', W / 2, 54);
+    g.fillText('AQUI SE FORMAM PROFISSIONAIS', W / 2, 54);
     // signal flags (generic colours)
     const cols = [['#e22', '#fff'], ['#fd0', '#136'], ['#136', '#fff'], ['#fd0', '#e22'], ['#fff', '#136'], ['#e22', '#fd0']];
     for (let i = 0; i < 22; i++) { const x = 90 + i * (W - 250) / 21, y = TB + fl - 34, c = cols[i % 6]; if (Math.abs(x + 35 - W / 2) < 0) continue; g.fillStyle = c[0]; g.fillRect(x, y, 70, 56); g.fillStyle = c[1]; if (i % 3 === 0) g.fillRect(x, y, 35, 56); else if (i % 3 === 1) g.fillRect(x + 20, y + 16, 30, 24); else { g.fillRect(x, y + 20, 70, 16); } }
@@ -339,7 +330,7 @@ const brTex = canvasTex(1024, 716, drawBR);
 // motto wall
 {
   const t = canvasTex(1024, 256, (g, W, H) => { g.fillStyle = '#f7f6f2'; g.fillRect(0, 0, W, H); g.fillStyle = '#1f4e9c'; g.fillRect(0, 0, W, 16); g.fillRect(0, H - 16, W, 16);
-    g.fillStyle = '#17346e'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 84px Montserrat, sans-serif'; g.fillText('EFICIÊNCIA,', W / 2, 78); g.fillText('CULTURA E TRADIÇÃO', W / 2, 176); });
+    g.fillStyle = '#17346e'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 84px Montserrat, sans-serif'; g.fillText('EFICIÊNCIA,', W / 2, 78); g.fillText('CULTURA E DIVERSÃO', W / 2, 176); });
   const m = new THREE.Mesh(new THREE.BoxGeometry(24, 6, 0.6), [0, 0, 0, 0, 0, 0].map((_, i) => new THREE.MeshStandardMaterial(i === 4 ? { map: t } : { color: 0xf4f4f1 })));
   m.position.set(167, Y0 + 3, -12); m.rotation.y = -Math.PI / 2; m.castShadow = true; scene.add(m);
 }
@@ -3187,10 +3178,14 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
       toast(`Baia ${TR.baia.n}`); andarPor([[0, SL1 + 6.6], [TR.baia.x * .6, SL1 + 3.4], [TR.baia.x, ZTIRO]], () => { cabo.rotation.y = Math.PI; entrarFPS(); }); });
 
     // fim da série: câmera mostra o alvo de perto; 8 acertos passa
-    function revisar() { document.body.classList.remove('tiro-fps'); TR.etapa = 'revisao'; TR.t = 0; TR.p0 = camera.position.clone(); TR.q0 = camera.quaternion.clone(); ov.classList.remove('fps'); mao.visible = false; MIRA.style.display = 'none';
+    function revisar() { TR.ultX = TR.baia ? TR.baia.x : 0; document.body.classList.remove('tiro-fps'); TR.etapa = 'revisao'; TR.t = 0; TR.p0 = camera.position.clone(); TR.q0 = camera.quaternion.clone(); ov.classList.remove('fps'); mao.visible = false; MIRA.style.display = 'none';
       aviso(`${TR.acertos} acertos válidos · ${TR.pts} pontos no alvo`, TR.acertos >= 8 ? '#3dff6a' : '#ffb347'); msgT = 4; }
     function concluir() { ov.style.display = 'none';
-      if (TR.acertos >= 8) { const st = TR.acertos >= 13 ? 3 : TR.acertos >= 11 ? 2 : 1; score += TR.pts; const pts = TR.pts, ac = TR.acertos; limpa(); toast(`${ac} acertos · +${pts} pontos do alvo`); nextPhase(st); }
+      if (TR.acertos >= 8) { const st = TR.acertos >= 13 ? 3 : TR.acertos >= 11 ? 2 : 1; score += TR.pts; const pts = TR.pts, ac = TR.acertos; toast(`${ac} acertos · +${pts} pontos do alvo`);
+        // sai sozinho da linha de tiro para a área externa do stand (antes ficava preso atrás da bancada)
+        document.body.classList.remove('tiro-fps'); ov.classList.remove('fps'); mao.visible = false; cabo.visible = true; if (window.__camHook && window.__camHook.tiro) window.__camHook = null;
+        camera.fov = 50; camera.near = 1; camera.far = 40000; camera.updateProjectionMatrix(); TR.cam = false; TR.baia = null; TR.saindo = true;
+        andarPor([[TR.ultX * .6, SL1 + 3.4], [0, SL1 + 6.6], [0, SL1 + 9.8], [0, SL1 + 12]], () => { cabo.rotation.y = 0; yaw = 0; limpa(); nextPhase(st); }); }
       else { const ac = TR.acertos; say('Instrutor de tiro', 'Faltou pouco, Cabo!', `Você fez <b>${ac} acertos válidos</b> em 15 tiros. Para passar são <b>8</b>. Lembre: só atire com a <b>luz verde</b> e mire no alvo da <b>sua baia</b>.`, 'Tentar de novo', () => { state = 'play'; MIRA.style.display = ''; ov.style.display = 'block'; ov.classList.add('fps'); document.body.classList.add('tiro-fps'); cabo.visible = false; municiar(); comandos(); }); } }
 
     function camTiro(dt) { if (!TR.on) return; const e = TR.etapa;
@@ -3219,7 +3214,7 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
     camTiro.tiro = 1;
 
     Object.assign(window.__tiro, {
-      setup(on) { limpa(); if (!on) return; TR.on = true; TR.cam = true; TR.baia = null; TR.etapa = 'aula'; TR.t = 0; TR.sit = 1; quadro.visible = true; window.__camHook = camTiro; poseInstalar();
+      setup(on) { limpa(); if (!on) return; TR.on = true; TR.cam = true; TR.baia = null; TR.saindo = false; TR.etapa = 'aula'; TR.t = 0; TR.sit = 1; quadro.visible = true; window.__camHook = camTiro; poseInstalar();
         const c = WL(CADEIRA.x, Y0, CADEIRA.z); cabo.position.set(c.x, Y0 - .43, c.z); cabo.rotation.y = Math.PI; vel.set(0, 0, 0);
         ov.style.display = 'none'; q('.ca').style.display = 'none'; q('.cb').style.display = 'none'; MIRA.style.display = 'none';
         setTimeout(() => { if (TR.on && TR.etapa === 'aula') { ov.style.display = 'block'; q('.ca').style.display = 'block'; } }, 1800); },
@@ -3243,7 +3238,7 @@ perigo(GX + .8, Y0 + 1.2, GZ + 3.6);
           if (e === 'espera' && (TR.t += dt) > .9) revisar(); }
         return Math.min(1, TR.acertos / 8); },
       hud() { $('qname').textContent = `Missão ${slotOf(8) + 1} de ${ORDER.length} · Instrução de Tiro`; const e = TR.etapa;
-        $('qgoal').textContent = (e === 'aula' || e === 'levanta' ? 'Assista à aula de tiro' : e === 'anda' && !TR.baia ? 'Indo para o Stand de Tiro' : e === 'baia' ? 'Escolha a sua baia' : `Acertos: ${TR.acertos} (precisa de 8) · tiros: ${TR.tiros} de 15`) + ` · ${fmt(ptime)}`;
+        $('qgoal').textContent = (e === 'aula' || e === 'levanta' ? 'Assista à aula de tiro' : e === 'anda' && TR.saindo ? 'Saindo do stand' : e === 'anda' && !TR.baia ? 'Indo para o Stand de Tiro' : e === 'baia' ? 'Escolha a sua baia' : `Acertos: ${TR.acertos} (precisa de 8) · tiros: ${TR.tiros} de 15`) + ` · ${fmt(ptime)}`;
         $('meterLabel').textContent = 'Acertos válidos (precisa de 8)'; },
       map(g, P, T) { if (!TR.on || TR.baia) return; if (Math.sin(T * 6) > -.2) { const c = WL(0, 0, SL1 + 8); g.fillStyle = '#ff3b2b'; g.beginPath(); g.arc(mx(c.x), mz(c.z), 4.2, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1; g.stroke(); } },
       _TR: TR, _PART: PART, _imp: impacto, _atirar: atirar, _tela(dy = 0) { const v = WL(TR.baia.x, YA + dy, ZALVO).project(camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; } });
