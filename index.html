@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Pavões na Ilha</title>
+
 
 <title>Pavões na Ilha - Jogo 3D Online Grátis no Navegador | Jogo da Ilha</title>
 
@@ -145,7 +145,16 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #cbtn::after{content:" \25B8"}
 #cbtn:focus-visible{outline:3px solid #fff;outline-offset:3px}#cbtn:hover{filter:brightness(1.08)}
 @media (max-width:560px){#meter{left:16px;transform:none;bottom:16px;width:38vw}#tl{left:8px;top:8px;width:47vw;gap:6px}#tl .panel{padding:7px 10px}#char .nm{font-size:15px}#lvl{font-size:10px;white-space:nowrap}#questp{right:8px;top:8px;max-width:44vw;padding:7px 10px}#qname{font-size:9px;letter-spacing:.06em}#qgoal{font-size:12px;margin-top:2px}#onl{padding:6px 10px;font-size:10px}}
-</style></head><body>
+</style></head>
+  
+  <body>
+
+    <header style="position: absolute; left: -9999px; top: -9999px;" aria-hidden="false">
+  <h1>Pavões na Ilha - Jogo 3D da Ilha</h1>
+  <p>Jogo online em 3D de simulação e aventura na Ilha das Cobras. Conclua missões, patrulhe a base, interaja com personagens e suba no placar de líderes.</p>
+</header>
+
+    
 <canvas id="c"></canvas>
 <div id="tl"><div class="panel" id="char"><div class="nm">Cabo Velho <span id="lvl">Nível 1</span></div><div class="row"><span>XP</span><div class="bar"><i id="xpf"></i></div></div><div class="row"><span>Fôlego</span><div class="bar"><i id="stf"></i></div><b id="stn" style="font-size:13px;letter-spacing:.04em;min-width:62px;text-align:right;font-variant-numeric:tabular-nums">100</b></div><div class="row"><span>Pontos</span><b id="pts" style="font-size:13px;letter-spacing:.04em">0</b></div><div id="buffs"></div></div>
 <div class="panel" id="onl"><i></i><span><b id="onln">1</b> <span id="onlt">jogando agora</span></span></div></div>
